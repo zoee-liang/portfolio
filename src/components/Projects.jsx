@@ -42,7 +42,7 @@ function ProjectCard({ project, index }) {
 
 export default function Projects() {
   return (
-    <section id="projects" className="py-24 bg-gray-50">
+    <section className="pt-28 pb-24 bg-gray-50">
       <div className="max-w-5xl mx-auto px-6">
         <h2 className="text-3xl font-bold text-gray-900 mb-16">Featured Work</h2>
 

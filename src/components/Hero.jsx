@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom'
+
 export default function Hero() {
   return (
-    <section id="about" className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-100 rounded-full mix-blend-multiply blur-3xl opacity-60 animate-blob" />
@@ -26,12 +28,12 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-wrap items-center gap-4 animate-fade-in-up animation-delay-400">
-          <a
-            href="#projects"
+          <Link
+            to="/projects"
             className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
           >
             View My Work
-          </a>
+          </Link>
           <a
             href="https://www.linkedin.com/in/zoee-liang/"
             target="_blank"

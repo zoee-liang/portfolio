@@ -18,7 +18,7 @@ function ExperienceCard({ job, index }) {
       </div>
 
       {/* Timeline dot */}
-      <div className="absolute left-20 top-6 w-2.5 h-2.5 rounded-full bg-indigo-500 -translate-x-[5px] hidden md:block ring-4 ring-gray-50" />
+      <div className="absolute left-20 top-6 w-2.5 h-2.5 rounded-full bg-indigo-500 -translate-x-[5px] hidden md:block ring-4 ring-white" />
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-indigo-100 hover:shadow-md transition-all duration-300">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
@@ -72,7 +72,7 @@ function ExperienceCard({ job, index }) {
 
 export default function Experience() {
   return (
-    <section id="experience" className="py-24 bg-gray-50">
+    <section className="pt-28 pb-24 bg-gray-50">
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-between mb-16">
           <h2 className="text-3xl font-bold text-gray-900">Work Experience</h2>

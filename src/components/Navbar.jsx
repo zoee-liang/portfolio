@@ -1,68 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 
 const navLinks = [
-  { label: 'About', href: '#about', id: 'about' },
-  { label: 'Experience', href: '#experience', id: 'experience' },
-  { label: 'Skills', href: '#skills', id: 'skills' },
-  { label: 'Projects', href: '#projects', id: 'projects' },
-  { label: 'Contact', href: '#contact', id: 'contact' },
+  { label: 'About', to: '/', hash: '#about' },
+  { label: 'Experience', to: '/experience' },
+  { label: 'Skills', to: '/skills' },
+  { label: 'Projects', to: '/projects' },
+  { label: 'Contact', to: '/contact' },
 ]
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState('about')
+function NavItem({ link, className, onClick }) {
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Track active section via IntersectionObserver
-  useEffect(() => {
-    const sectionIds = ['about', 'experience', 'skills', 'projects']
-    const observers = sectionIds.map((id) => {
-      const el = document.getElementById(id)
-      if (!el) return null
-      const observer = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id) },
-        { threshold: 0.35 }
-      )
-      observer.observe(el)
-      return observer
-    })
-    return () => observers.forEach((o) => o?.disconnect())
-  }, [])
+  if (link.hash) {
+    const isActive = location.pathname === '/' && location.hash === link.hash
+    return (
+      <a
+        href={link.to + link.hash}
+        className={typeof className === 'function' ? className({ isActive }) : className}
+        onClick={(e) => {
+          e.preventDefault()
+          if (location.pathname === '/') {
+            document.querySelector(link.hash)?.scrollIntoView({ behavior: 'smooth' })
+          } else {
+            navigate(link.to + link.hash)
+          }
+          onClick?.()
+        }}
+      >
+        {link.label}
+        {isActive && (
+          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
+        )}
+      </a>
+    )
+  }
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm transition-shadow duration-300 ${
-        scrolled ? 'shadow-sm' : ''
-      }`}
+    <NavLink
+      to={link.to}
+      className={className}
+      onClick={onClick}
     >
+      {({ isActive }) => (
+        <>
+          {link.label}
+          {isActive && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
+          )}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm">
       <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <a href="#about" className="text-gray-900 font-semibold text-lg tracking-tight">
+        <Link to="/" className="text-gray-900 font-semibold text-lg tracking-tight">
           Zoe Liang
-        </a>
+        </Link>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`text-sm transition-colors relative pb-1 ${
-                activeSection === link.id
-                  ? 'text-indigo-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              {link.label}
-              {activeSection === link.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
-              )}
-            </a>
+            <NavItem
+              key={link.label}
+              link={link}
+              className={({ isActive }) =>
+                `text-sm transition-colors relative pb-1 ${
+                  isActive
+                    ? 'text-indigo-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`
+              }
+            />
           ))}
         </div>
 
@@ -86,16 +102,14 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-4">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`text-sm ${
-                activeSection === link.id ? 'text-indigo-600 font-medium' : 'text-gray-500'
-              }`}
+            <NavItem
+              key={link.label}
+              link={link}
+              className={({ isActive }) =>
+                `text-sm ${isActive ? 'text-indigo-600 font-medium' : 'text-gray-500'}`
+              }
               onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </a>
+            />
           ))}
         </div>
       )}

@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer id="contact" className="py-12 border-t border-gray-100">
+    <footer className="py-12 border-t border-gray-100">
       <div className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-3">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <p className="text-gray-900 font-semibold">Get in touch</p>

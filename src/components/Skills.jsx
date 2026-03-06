@@ -5,7 +5,7 @@ export default function Skills() {
   const [ref, inView] = useInView()
 
   return (
-    <section id="skills" className="py-24">
+    <section className="pt-28 pb-24">
       <div className="max-w-5xl mx-auto px-6">
         <h2 className="text-3xl font-bold text-gray-900 mb-16">Skills</h2>
 
