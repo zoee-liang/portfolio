@@ -1,2 +1,5 @@
 .DS_Store
 CLAUDE.md
+packages*
+node_modules*/
+dist
