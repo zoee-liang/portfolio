@@ -23,32 +23,241 @@ html {
   }
 }
 
-@keyframes blob {
-  0%, 100% {
-    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-    transform: scale(1) translate(0, 0);
+@keyframes drawIn {
+  from {
+    stroke-dashoffset: 200;
   }
-  33% {
-    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
-    transform: scale(1.05) translate(10px, -10px);
+  to {
+    stroke-dashoffset: 0;
   }
-  66% {
-    border-radius: 50% 40% 60% 40% / 30% 60% 40% 60%;
-    transform: scale(0.97) translate(-5px, 8px);
-  }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
 }
 
 @layer utilities {
   .animate-fade-in-up {
     animation: fadeInUp 0.7s ease both;
   }
-  .animate-blob {
-    animation: blob 9s ease-in-out infinite;
-  }
   .animation-delay-100 { animation-delay: 0.1s; }
   .animation-delay-200 { animation-delay: 0.2s; }
   .animation-delay-300 { animation-delay: 0.3s; }
   .animation-delay-400 { animation-delay: 0.4s; }
-  .animation-delay-2000 { animation-delay: 2s; }
-  .animation-delay-4000 { animation-delay: 4s; }
+}
+
+/* Squiggly underline for headings */
+.squiggly-underline {
+  position: relative;
+  display: inline-block;
+}
+.squiggly-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='8' viewBox='0 0 100 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 4 Q 5 0, 10 4 Q 15 8, 20 4 Q 25 0, 30 4 Q 35 8, 40 4 Q 45 0, 50 4 Q 55 8, 60 4 Q 65 0, 70 4 Q 75 8, 80 4 Q 85 0, 90 4 Q 95 8, 100 4' fill='none' stroke='%23111827' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 100px 8px;
+}
+
+/* Hover squiggly for links */
+.hover-squiggly {
+  position: relative;
+  text-decoration: none;
+}
+.hover-squiggly::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='6' viewBox='0 0 80 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 3 Q 4 0, 8 3 Q 12 6, 16 3 Q 20 0, 24 3 Q 28 6, 32 3 Q 36 0, 40 3 Q 44 6, 48 3 Q 52 0, 56 3 Q 60 6, 64 3 Q 68 0, 72 3 Q 76 6, 80 3' fill='none' stroke='%23111827' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 80px 6px;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+.hover-squiggly:hover::after {
+  transform: scaleX(1);
+}
+
+/* Notion-style toggle */
+.notion-toggle-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.notion-toggle-content.open {
+  grid-template-rows: 1fr;
+}
+.notion-toggle-content > div {
+  overflow: hidden;
+}
+
+/* Hand-drawn border effect */
+.sketch-border {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 3px;
+  box-shadow: 2px 2px 0 #f3f4f6;
+}
+.sketch-border:hover {
+  border-color: #111827;
+  box-shadow: 3px 3px 0 #e5e7eb;
+}
+
+/* Pencil cursor for interactive elements */
+.cursor-pencil {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") 0 20, pointer;
+}
+
+/* Yellow highlight accent */
+.highlight {
+  background: linear-gradient(transparent 60%, #fef08a 60%);
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+
+/* Project card with tilt on hover */
+.project-card {
+  perspective: 800px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.project-card:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+
+/* Doodle illustration reveal on hover */
+.project-card .project-doodle {
+  opacity: 0.06;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: scale(0.95);
+}
+.project-card:hover .project-doodle {
+  opacity: 0.12;
+  transform: scale(1);
+}
+
+/* Staggered tag animation */
+.tag-stagger {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+/* Outcome highlight on hover */
+.project-card .outcome-bar {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.project-card:hover .outcome-bar {
+  background-color: #fefce8;
+  border-color: #fef08a;
+}
+
+/* Contact link card */
+.contact-link-card {
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.contact-link-card:hover {
+  transform: translateY(-3px) rotate(-0.3deg);
+  border-color: #111827;
+  box-shadow: 4px 4px 0 #e5e7eb;
+}
+.contact-link-card .contact-icon {
+  transition: transform 0.3s ease;
+}
+.contact-link-card:hover .contact-icon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+/* Paper plane float animation */
+@keyframes floatAround {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(8px, -12px) rotate(3deg); }
+  50% { transform: translate(-4px, -20px) rotate(-2deg); }
+  75% { transform: translate(12px, -8px) rotate(4deg); }
+}
+.animate-float {
+  animation: floatAround 6s ease-in-out infinite;
+}
+
+/* Doodle wander animations — float + sway across space */
+@keyframes doodleWander1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(12px, -8px) rotate(4deg); }
+  50% { transform: translate(-6px, -14px) rotate(-2deg); }
+  75% { transform: translate(8px, -4px) rotate(3deg); }
+}
+@keyframes doodleWander2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-10px, -6px) rotate(-3deg); }
+  50% { transform: translate(14px, -12px) rotate(3deg); }
+  80% { transform: translate(-4px, -8px) rotate(-2deg); }
+}
+@keyframes doodleWander3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  30% { transform: translate(8px, -10px) rotate(5deg); }
+  60% { transform: translate(-12px, -6px) rotate(-4deg); }
+  90% { transform: translate(6px, -14px) rotate(2deg); }
+}
+.animate-doodle-1 {
+  animation: doodleWander1 7s ease-in-out infinite;
+}
+.animate-doodle-2 {
+  animation: doodleWander2 9s ease-in-out infinite;
+}
+.animate-doodle-3 {
+  animation: doodleWander3 8s ease-in-out infinite;
+}
+
+/* Calm path drawing animation */
+.draw-path {
+  stroke-dasharray: var(--path-length, 800);
+  stroke-dashoffset: var(--path-length, 800);
+}
+.draw-path.visible {
+  animation: drawLine 5s ease-in-out forwards;
+}
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Arrow tip fade in after line finishes drawing */
+.draw-arrow {
+  opacity: 0;
+}
+.draw-arrow.visible {
+  animation: fadeInUp 0.5s ease forwards;
+  animation-delay: 4.8s;
+}
+
+/* Falling leaves */
+@keyframes leafFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+  }
+}
+@keyframes leafSway {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(18px) rotate(8deg); }
+  75% { transform: translateX(-18px) rotate(-8deg); }
+}
+.falling-leaf {
+  position: absolute;
+  top: -20px;
+  animation: leafFall var(--fall-duration, 20s) var(--fall-delay, 0s) linear infinite;
+  pointer-events: none;
+}
+.falling-leaf svg {
+  animation: leafSway 3.5s ease-in-out infinite;
 }

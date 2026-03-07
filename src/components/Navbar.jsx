@@ -28,7 +28,7 @@ function NavItem({ link, className, onClick, location, navigate }) {
       >
         {link.label}
         {isActive && (
-          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
+          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full" />
         )}
       </a>
     )
@@ -44,7 +44,7 @@ function NavItem({ link, className, onClick, location, navigate }) {
         <>
           {link.label}
           {isActive && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full" />
           )}
         </>
       )}
@@ -58,9 +58,9 @@ export default function Navbar() {
   const navigate = useNavigate()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm">
-      <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-gray-900 font-semibold text-lg tracking-tight">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+      <nav className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+        <Link to="/" className="font-hand text-gray-900 font-semibold text-xl">
           Zoe Liang
         </Link>
 
@@ -75,7 +75,7 @@ export default function Navbar() {
               className={({ isActive }) =>
                 `text-sm transition-colors relative pb-1 ${
                   isActive
-                    ? 'text-indigo-600 font-medium'
+                    ? 'text-gray-900 font-medium'
                     : 'text-gray-500 hover:text-gray-900'
                 }`
               }
@@ -109,7 +109,7 @@ export default function Navbar() {
               location={location}
               navigate={navigate}
               className={({ isActive }) =>
-                `text-sm ${isActive ? 'text-indigo-600 font-medium' : 'text-gray-500'}`
+                `text-sm ${isActive ? 'text-gray-900 font-medium' : 'text-gray-500'}`
               }
               onClick={() => setMenuOpen(false)}
             />

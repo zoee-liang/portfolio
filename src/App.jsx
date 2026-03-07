@@ -9,6 +9,7 @@ import Projects from './components/Projects'
 import Contact from './components/Contact'
 import Stats from './components/Stats'
 import Footer from './components/Footer'
+import FallingLeaves from './components/FallingLeaves'
 import { Analytics } from '@vercel/analytics/react'
 
 const pageTitles = {
@@ -35,9 +36,9 @@ function ScrollManager() {
 function NotFound() {
   return (
     <div className="pt-28 pb-24 text-center">
-      <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
+      <h1 className="font-hand text-6xl font-medium text-gray-900 mb-4">404</h1>
       <p className="text-gray-500 text-lg mb-8">Ooops! Nothing to see here.</p>
-      <a href="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
+      <a href="/" className="hover-squiggly text-gray-900 font-medium">
         Back to Home
       </a>
     </div>
@@ -48,6 +49,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen flex flex-col">
+        <FallingLeaves />
         <Navbar />
         <ScrollManager />
         <main className="flex-1">

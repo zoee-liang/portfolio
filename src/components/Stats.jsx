@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useInView } from '../hooks/useInView'
+import { SketchyBarChart } from './Doodles'
 
 const stats = [
   { value: 6, suffix: '+', label: 'Years in Data' },
   { value: 60, suffix: '%', label: 'Faster Pipelines', prefix: '~' },
-  { value: 50, suffix: '%', label: 'Reporting Time Saved', prefix: '~' },
+  { value: 50, suffix: '%', label: 'Manual Reporting Time Saved', prefix: '~' },
   { value: 4, suffix: '', label: 'Data Stacks Built' },
 ]
 
@@ -36,8 +37,11 @@ export default function Stats() {
   const [ref, inView] = useInView()
 
   return (
-    <section ref={ref} className="pt-4 pb-16 border-y border-gray-100">
-      <div className="max-w-5xl mx-auto px-6">
+    <section ref={ref} className="relative py-16">
+      {/* Background doodle */}
+      <SketchyBarChart className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 text-gray-900 opacity-[0.06] pointer-events-none" />
+
+      <div className="relative max-w-3xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, i) => (
             <div
@@ -47,10 +51,10 @@ export default function Stats() {
               }`}
               style={{ transitionDelay: `${i * 120}ms` }}
             >
-              <div className="text-4xl font-bold text-indigo-600 mb-1 tabular-nums">
+              <div className="font-hand text-4xl font-semibold text-gray-900 mb-1">
                 <Counter {...stat} active={inView} />
               </div>
-              <div className="text-sm text-gray-500">{stat.label}</div>
+              <div className="text-xs text-gray-400 uppercase tracking-widest">{stat.label}</div>
             </div>
           ))}
         </div>
