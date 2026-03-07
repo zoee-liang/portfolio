@@ -102,6 +102,7 @@ export const projects = [
       'Built and deployed an internal AI chatbot that gives teams natural language access to analytics data. Integrates a dbt MCP server for semantic context, powered by OpenAI agents, and hosted on Google Cloud Run.',
     tags: ['dbt MCP', 'OpenAI Agents', 'Google Cloud Run', 'Python'],
     outcome: 'Led team adoption of agentic analytics engineering practices',
+    link: '',
   },
   {
     title: 'Context Engineering',
@@ -109,6 +110,7 @@ export const projects = [
       'Designed and built a metadata enrichment framework for the dbt Semantic Layer: adding business context, synonyms, tags, sample values, example questions, related metrics, and usage guidance that feeds into the AI agent\'s vector store as structured context, significantly improving natural-language query accuracy.',
     tags: ['dbt Semantic Layer', 'OpenAI', 'Vector Store', 'Python'],
     outcome: 'Reusable context layer now leveraged across AI-powered data tools',
+    link: '',
   },
   {
     title: 'CI/CD Data Pipeline',
@@ -116,6 +118,7 @@ export const projects = [
       'Designed and implemented a blue/green deployment strategy and full CI/CD pipeline for data releases using GitHub Actions and dbt Cloud, replacing ad-hoc changes with structured, validated production deployments.',
     tags: ['GitHub Actions', 'dbt Cloud', 'Snowflake'],
     outcome: 'Structured weekly deployments with full testing & validation',
+    link: '',
   },
   {
     title: 'Snowflake Optimization',
@@ -123,5 +126,6 @@ export const projects = [
       'Audited Snowflake warehouse configurations and dbt model materializations to identify inefficiencies. Refactored query patterns and warehouse sizing to dramatically improve pipeline performance.',
     tags: ['Snowflake', 'dbt', 'SQL'],
     outcome: '~60% reduction in dbt job runtime',
+    link: '',
   },
 ]
