@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://portfolio-jsquvvyxc-zoee-liangs-projects.vercel.app/sitemap.xml

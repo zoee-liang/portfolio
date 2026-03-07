@@ -11,8 +11,8 @@ export default function Hero() {
       </div>
 
       <div className="relative max-w-5xl mx-auto px-6 py-24">
-        <p className="text-indigo-600 font-semibold text-sm tracking-widest uppercase mb-4 animate-fade-in-up">
-          Hi, I'm
+        <p className="text-indigo-600 font-semibold text-sm tracking-widest mb-4 animate-fade-in-up">
+          Hi there! 👋 I'm
         </p>
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-4 animate-fade-in-up animation-delay-100">
           Zoe Liang

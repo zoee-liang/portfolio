@@ -9,10 +9,7 @@ const navLinks = [
   { label: 'Contact', to: '/contact' },
 ]
 
-function NavItem({ link, className, onClick }) {
-  const location = useLocation()
-  const navigate = useNavigate()
-
+function NavItem({ link, className, onClick, location, navigate }) {
   if (link.hash) {
     const isActive = location.pathname === '/' && location.hash === link.hash
     return (
@@ -57,6 +54,8 @@ function NavItem({ link, className, onClick }) {
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm">
@@ -71,6 +70,8 @@ export default function Navbar() {
             <NavItem
               key={link.label}
               link={link}
+              location={location}
+              navigate={navigate}
               className={({ isActive }) =>
                 `text-sm transition-colors relative pb-1 ${
                   isActive
@@ -88,7 +89,7 @@ export default function Navbar() {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             {menuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             ) : (
@@ -105,6 +106,8 @@ export default function Navbar() {
             <NavItem
               key={link.label}
               link={link}
+              location={location}
+              navigate={navigate}
               className={({ isActive }) =>
                 `text-sm ${isActive ? 'text-indigo-600 font-medium' : 'text-gray-500'}`
               }
