@@ -12,6 +12,7 @@ import Stats from './components/Stats'
 import Footer from './components/Footer'
 import FallingLeaves from './components/FallingLeaves'
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { projects } from './data/content'
 
 const defaultDescription = 'Building, architecting, and automating. ✨'
@@ -106,6 +107,7 @@ export default function App() {
         </main>
         <Footer />
         <Analytics />
+        <SpeedInsights />
       </div>
     </BrowserRouter>
   )
