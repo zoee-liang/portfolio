@@ -3,7 +3,7 @@ export const about = [
   "I've been a founding or first data hire throughout my career, which means I've gotten really comfortable with ambiguity, duct tape, and turning \"we don't have data infrastructure\" into \"actually, we do now, and they're automated.\"",
   "These days I co-own a data platform end-to-end, and I've been spending a lot of my time at the intersection of data infrastructure and AI, building things like internal AI agents and context engineering frameworks that make data platforms useful not just for humans, but for LLMs too.",
   "I care a lot about working on things that matter. I've gravitated toward mission-driven organizations throughout my career, and I think the best data work happens when you genuinely care about the people using what you build.",
-  "Outside of work, I love spending time with my husband traveling the world and watching old movies. In my own time, I read, write, and currently learning Buddhism. 🍵📖",
+  "Outside of work, I love spending time with my husband traveling the world and watching old movies. In my own time, I read, write, and am currently learning Buddhism. 🍵📖",
 ]
 
 export const experience = [
@@ -98,6 +98,7 @@ export const skills = [
 export const projects = [
   {
     title: 'AI Data Chatbot',
+    slug: 'ai-data-chatbot',
     description:
       'Built and deployed an internal AI chatbot that gives teams natural language access to analytics data. Integrates a dbt MCP server for semantic context, powered by OpenAI agents, and hosted on Google Cloud Run.',
     tags: ['dbt MCP', 'OpenAI Agents', 'Google Cloud Run', 'Python'],
@@ -106,6 +107,7 @@ export const projects = [
   },
   {
     title: 'Context Engineering',
+    slug: 'context-engineering',
     description:
       'Designed and built a metadata enrichment framework for the dbt Semantic Layer: adding business context, synonyms, tags, sample values, example questions, related metrics, and usage guidance that feeds into the AI agent\'s vector store as structured context, significantly improving natural-language query accuracy.',
     tags: ['dbt Semantic Layer', 'OpenAI', 'Vector Store', 'Python'],
@@ -114,6 +116,7 @@ export const projects = [
   },
   {
     title: 'CI/CD Data Pipeline',
+    slug: 'cicd-data-pipeline',
     description:
       'Designed and implemented a blue/green deployment strategy and full CI/CD pipeline for data releases using GitHub Actions and dbt Cloud, replacing ad-hoc changes with structured, validated production deployments.',
     tags: ['GitHub Actions', 'dbt Cloud', 'Snowflake'],
@@ -122,6 +125,7 @@ export const projects = [
   },
   {
     title: 'Snowflake Optimization',
+    slug: 'snowflake-optimization',
     description:
       'Audited Snowflake warehouse configurations and dbt model materializations to identify inefficiencies. Refactored query patterns and warehouse sizing to dramatically improve pipeline performance.',
     tags: ['Snowflake', 'dbt', 'SQL'],
@@ -129,3 +133,50 @@ export const projects = [
     link: '',
   },
 ]
+
+export const projectDetails = {
+  'ai-data-chatbot': {
+    overview: [
+      'This project started from a simple question: how do we make our data accessible to everyone, not just guarded in a BI tool?',
+      'I built a multi-agent Slack chatbot that lets anyone on the team ask data questions in plain English on a tool they use everyday, and in a cost effective way. Behind the scenes, it uses LLM-based routing to classify queries and dispatch them to specialized agents - one for data analysis, one for metadata operations - before a document authoring agent synthesizes everything into a clean, readable report with dashboard links, CSV downloads and visualizations.',
+      'The system is powered by OpenAI (GPT-5 / GPT-5-mini / GPT-4o-mini, optimized per agent for cost efficiency), uses ChromaDB vector stores for semantic search across few-shot examples, dbt metadata, the Semantic Layer, and integrates with the dbt MCP server.',
+    ],
+    architecture: {
+      caption: 'Multi-agent architecture: Slack webhook to Cloud Run',
+      description: [
+        'The system runs on Google Cloud Run as a stateless Flask HTTP webhook. When a user sends a message in Slack, the request hits the webhook endpoint, which verifies the Slack signature and routes it through the multi-agent pipeline.',
+        'The Orchestrator Agent (GPT-5-mini) classifies each query as a metadata, data analysis, or out-of-scope request. Data analysis queries go to the Data Analyst Agent, which runs a two-phase workflow: a retrieval phase (GPT-5) that searches vector stores and queries metrics via the dbt MCP server, followed by an analysis phase (GPT-5-mini) that generates and executes Python code in a sandboxed environment.',
+        'Metadata queries go to the Data Operations Agent, which retrieves relevant metadata and can call the compiled SQL tool when needed.',
+        'All results flow into the Document Authoring Agent (GPT-4o-mini), which synthesizes findings into a structured report with key findings, insights, related Looker dashboard links, a downloadable CSV, and visualizations when applicable. A confidence scorer evaluates the quality of each response based on vector similarity, query success, and result completeness.',
+      ],
+    },
+    cicd: {
+      caption: 'CI/CD pipeline: GitHub to Cloud Run via Cloud Build',
+      description: [
+        'Every push to main triggers a Google Cloud Build pipeline. The build first downloads pre-built ChromaDB vector stores and configuration files from a GCS bucket, then runs a multi-stage Docker build - a builder stage installs Python dependencies, and a runtime stage copies in the application code along with the vector stores and config.',
+        'The resulting image is pushed to Google Container Registry and deployed to Cloud Run.',
+      ],
+    },
+    dbtPipeline: {
+      caption: 'dbt repo CI/CD pipeline: automated vector store & metadata rebuild',
+      description: [
+        'The chatbot\'s knowledge comes from the dbt repo. Whenever models or metrics change, a GitHub Actions workflow automatically rebuilds all the vector stores and metadata that power the chatbot\'s retrieval pipeline.',
+        'The workflow runs in six steps: it rebuilds the dbt metadata vector store by fetching the latest models, sources, exposures, and tests from the dbt Cloud Discovery API; rebuilds the Semantic Layer vector store by parsing metric YAML definitions and extracting measures, dimensions, entities, and AI context (see my [[/projects/context-engineering|Context Engineering]] project for more details!); refreshes the few-shot examples index; builds a metadata snapshot with AI-powered domain classification across business verticals; uploads everything to Cloud Storage; and finally triggers a Cloud Build to redeploy the chatbot with the fresh data baked in.',
+        'This means the chatbot is always in sync with the dbt repo - when someone adds a new metric or updates a model, the chatbot knows about it after the next deploy, with zero manual intervention.',
+      ],
+    },
+    infrastructure: {
+      description: [
+        'Cloud Run scales to zero by default, which is great for cost but means the first request after idle hits a cold start. For an internal tool used primarily during business hours, I set up a Google Cloud Scheduler job that automatically scales the minimum instance count to 1 at 8:15 AM and back to 0 at 5:15 PM, Monday through Friday.',
+        'This gives the team instant response times during working hours while keeping costs near zero on evenings and weekends - the best of both worlds.',
+      ],
+    },
+    tooling: {
+      description: [
+        'The system integrates with several external services and GCP infrastructure. The dbt MCP server provides metric querying via HTTP/SSE with a JSON-RPC protocol, connecting to the Snowflake data warehouse. The dbt Cloud Discovery API (GraphQL) powers the metadata rebuild pipeline. All secrets are managed through GCP Secret Manager, and structured JSON logs flow to Cloud Logging for observability.',
+        'Cloud Storage acts as the bridge between the dbt repo CI/CD (GitHub Actions writes vector stores and config) and the chatbot deploy pipeline (Cloud Build reads them). Runtime feedback logs are stored with a 90-day lifecycle policy that automatically transitions to NEARLINE storage for cost optimization.',
+      ],
+    },
+    stack: ['OpenAI GPT-5 / GPT-5-mini / GPT-4o-mini', 'ChromaDB', 'dbt MCP Server (HTTP/SSE)', 'dbt Cloud Discovery API (GraphQL)', 'Google Cloud Run', 'Google Cloud Build', 'Google Cloud Scheduler', 'Google Cloud Storage', 'GCP Secret Manager', 'GCP Cloud Logging', 'Snowflake', 'Flask', 'Python', 'Docker', 'GitHub Actions'],
+  },
+}

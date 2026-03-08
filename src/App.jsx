@@ -6,11 +6,13 @@ import About from './components/About'
 import Experience from './components/Experience'
 import Skills from './components/Skills'
 import Projects from './components/Projects'
+import ProjectDetail from './components/ProjectDetail'
 import Contact from './components/Contact'
 import Stats from './components/Stats'
 import Footer from './components/Footer'
 import FallingLeaves from './components/FallingLeaves'
 import { Analytics } from '@vercel/analytics/react'
+import { projects } from './data/content'
 
 const pageTitles = {
   '/': 'Zoe Liang - Data Platform Engineer',
@@ -19,6 +21,11 @@ const pageTitles = {
   '/projects': 'Projects - Zoe Liang',
   '/contact': 'Contact - Zoe Liang',
 }
+
+// Build project detail titles from data
+projects.forEach((p) => {
+  pageTitles[`/projects/${p.slug}`] = `${p.title} - Zoe Liang`
+})
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
@@ -58,6 +65,7 @@ export default function App() {
             <Route path="/experience" element={<Experience />} />
             <Route path="/skills" element={<Skills />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:slug" element={<ProjectDetail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

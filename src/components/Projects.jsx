@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom'
 import { useInView } from '../hooks/useInView'
-import { projects } from '../data/content'
+import { projects, projectDetails } from '../data/content'
 import { SquigglyDivider, ChatbotDoodle, ContextLayersDoodle, CiCdDoodle, SpeedometerDoodle } from './Doodles'
 
 const projectDoodles = {
@@ -32,7 +33,9 @@ function ProjectCard({ project, index }) {
       <span className="text-gray-200 text-xs font-mono mb-3">#{String(index + 1).padStart(2, '0')}</span>
 
       <h3 className="text-base font-semibold text-gray-900 mb-2 relative z-10">
-        {project.title}
+        <Link to={`/projects/${project.slug}`} className="hover-squiggly">
+          {project.title}
+        </Link>
       </h3>
       <p className="text-gray-500 text-sm leading-relaxed mb-5 flex-1 relative z-10">
         {project.description}
@@ -53,21 +56,29 @@ function ProjectCard({ project, index }) {
       </div>
 
       {/* Outcome with hover highlight */}
-      <div className="outcome-bar flex items-start gap-2 text-sm text-gray-500 border border-gray-100 rounded px-3 py-2 bg-gray-50/50">
+      <div className="outcome-bar flex items-start gap-2 text-sm text-emerald-700 border border-emerald-200 rounded px-3 py-2 bg-emerald-50/60">
         <span className="shrink-0">&#10003;</span>
         <span className="leading-relaxed">{project.outcome}</span>
       </div>
 
-      {project.link && (
-        <a
-          href={project.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover-squiggly mt-4 text-sm text-gray-900 font-medium self-start relative z-10"
+      <div className="flex items-center gap-4 mt-4 relative z-10">
+        <Link
+          to={`/projects/${project.slug}`}
+          className="hover-squiggly text-sm text-gray-900 font-medium"
         >
-          View on GitHub →
-        </a>
-      )}
+          Read more &rarr;
+        </Link>
+        {project.link && (
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover-squiggly text-sm text-gray-400 font-medium"
+          >
+            GitHub
+          </a>
+        )}
+      </div>
     </div>
   )
 }
@@ -79,7 +90,7 @@ export default function Projects() {
         <h2 className="font-hand text-3xl font-medium text-gray-900 mb-4">
           <span className="squiggly-underline">Featured Work</span>
         </h2>
-        <p className="text-gray-400 text-sm mb-12">Hover over a card to peek at the doodle.</p>
+        <p className="text-gray-400 text-sm mb-12">Hover over a card to peek at the doodle, or click "Read more" for an in-depth look.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {projects.map((project, i) => (
