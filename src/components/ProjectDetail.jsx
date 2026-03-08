@@ -4,12 +4,19 @@ import { projects, projectDetails } from '../data/content'
 import { SquigglyDivider } from './Doodles'
 import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram } from './ProjectDiagrams'
 
-// Parses [[url|text]] into highlighted Link elements
+// Parses [[url|text]] into highlighted Link elements (internal or external)
 function RichText({ text }) {
   const parts = text.split(/\[\[([^\]]+)\]\]/g)
   return parts.map((part, i) => {
     if (i % 2 === 0) return part
     const [url, label] = part.split('|')
+    if (url.startsWith('http')) {
+      return (
+        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="highlight hover-squiggly font-medium text-gray-900">
+          {label}
+        </a>
+      )
+    }
     return (
       <Link key={i} to={url} className="highlight hover-squiggly font-medium text-gray-900">
         {label}
@@ -223,6 +230,61 @@ export default function ProjectDetail() {
                     </figure>
                   ) : null
                 })()}
+              </Section>
+            )}
+
+            {/* Decisions & Tradeoffs */}
+            {detail.decisions && (
+              <Section title="Decisions & Tradeoffs" delay={100}>
+                <div className="space-y-10">
+                  {detail.decisions.items.map((item, i) => (
+                    <div key={i}>
+                      <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
+                      <div className="space-y-4">
+                        {item.paragraphs.map((p, j) => (
+                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {/* Results & Impact */}
+            {detail.results && (
+              <Section title="Results & Impact" delay={100}>
+                <div className="space-y-10">
+                  {detail.results.items.map((item, i) => (
+                    <div key={i}>
+                      <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
+                      <div className="space-y-4">
+                        {item.paragraphs.map((p, j) => (
+                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {/* What's Next */}
+            {detail.whatsNext && (
+              <Section title="What's Next" delay={100}>
+                <p className="text-gray-500 text-base leading-relaxed mb-8">{detail.whatsNext.intro}</p>
+                <div className="space-y-10">
+                  {detail.whatsNext.items.map((item, i) => (
+                    <div key={i}>
+                      <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
+                      <div className="space-y-4">
+                        {item.paragraphs.map((p, j) => (
+                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </Section>
             )}
 

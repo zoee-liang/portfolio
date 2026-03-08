@@ -177,6 +177,100 @@ export const projectDetails = {
         'Cloud Storage acts as the bridge between the dbt repo CI/CD (GitHub Actions writes vector stores and config) and the chatbot deploy pipeline (Cloud Build reads them). Runtime feedback logs are stored with a 90-day lifecycle policy that automatically transitions to NEARLINE storage for cost optimization.',
       ],
     },
+    decisions: {
+      items: [
+        {
+          title: 'Multi-agent architecture',
+          paragraphs: [
+            'The system didn\'t start as a multi-agent pipeline. Early versions used a single agent that handled everything: routing, retrieval, analysis, response formatting. It worked for simple questions, but as the scope grew, accuracy, speed and cost started to suffer. A single powerful model doing everything was expensive and slow, and a single cheap model doing everything wasn\'t accurate enough.',
+            'Breaking the system into specialized agents solved this in a few ways (inspired by and huge shoutout to [[https://www.youtube.com/watch?v=0x60vgPx_k0|this dbt Coalesce talk]]!). Each agent could use the right model for its task: GPT-5 for the retrieval phase where accuracy is most critical (finding the right metrics and dimensions), GPT-5-mini for orchestration and analysis where the task is more straightforward once you have the right data, and GPT-4o-mini for document authoring where the job is formatting and synthesis rather than reasoning. This cut costs significantly while actually improving accuracy, because each model is operating in the part of the problem it\'s best suited for. It also improved latency - cheaper models are faster, and most of the pipeline doesn\'t need the heavyweight model.',
+          ],
+        },
+        {
+          title: 'Two-phase retrieval + analysis',
+          paragraphs: [
+            'The Data Analyst Agent splits its work into two distinct phases rather than doing everything in a single pass. Phase 1 (retrieval) uses GPT-5 to search vector stores, resolve metric/dimension names, and query the dbt Semantic Layer via MCP. Phase 2 (analysis) uses GPT-5-mini to generate and execute Python code against the retrieved data.',
+            'The reasoning: retrieval is the hardest part. If the agent pulls the wrong metric or misunderstands which dimension to group by, no amount of analysis will save the response. So the retrieval phase gets the most capable model and an agentic tool loop with up to 8 turns to get it right. Once the right data is in hand, the analysis step - computing aggregations, generating charts, calculating trends - is relatively mechanical. A smaller, faster model handles it well, and the user gets their answer sooner.',
+          ],
+        },
+        {
+          title: 'Flask over FastAPI',
+          paragraphs: [
+            'The chatbot is a Slack webhook handler - requests come in, get processed through the agent pipeline, and a response goes back. Flask is well-suited for this: it\'s simple, battle-tested, and the team is familiar with it.',
+            'The concurrency question came up early. FastAPI\'s async model handles multiple concurrent requests efficiently within a single process, which matters at scale. But Flask with threading handles concurrency well enough for this use case - the application uses threaded request handling to support up to 30 concurrent user queries. Since most of the wall-clock time per request is spent waiting on external API calls (OpenAI, dbt MCP, vector store lookups), threads work naturally here - they release the GIL during I/O waits, so multiple requests can be in-flight simultaneously without blocking each other. This gives us solid concurrency without the complexity of async code - no await chains, no event loop debugging, and straightforward error traces. For an internal tool where 30 concurrent users is a comfortable upper bound, threading with Flask is simpler to maintain and has been working well in production.',
+          ],
+        },
+        {
+          title: 'Cloud Run over Cloud Functions',
+          paragraphs: [
+            'A few factors drove this choice. The agent pipeline can take minutes for complex queries (multiple LLM calls, vector store searches, an agentic tool loop, then Python code execution). Cloud Functions has tighter timeout constraints and less control over the runtime environment. Cloud Run gives full control over the container, which matters when the Docker image includes baked-in ChromaDB vector stores. It also enables the Cloud Scheduler optimization for managing cold starts during business hours - something that doesn\'t translate as cleanly to Functions.',
+          ],
+        },
+        {
+          title: 'Baked-in vector stores over hosted ChromaDB',
+          paragraphs: [
+            'The vector stores (dbt metadata, semantic layer, few-shot examples) are built during CI/CD and baked directly into the Docker image rather than queried from a hosted ChromaDB instance at runtime.',
+            'The primary driver was latency. Every user query hits the vector store multiple times during the retrieval phase: searching for relevant metrics, matching dimensions, pulling few-shot examples. Network round-trips to a hosted database would add up fast, especially inside an agentic loop that can run up to 8 turns. With the vector stores in-memory on the same container, retrieval is near-instantaneous.',
+            'The secondary benefit is cost and simplicity: no hosted database to manage, no additional platform to monitor, and one less service that can go down. The tradeoff is that the vector stores are only as fresh as the last deploy, but the dbt repo CI/CD pipeline handles this automatically: any change to models or metrics triggers a rebuild and redeploy, so the chatbot stays in sync without manual intervention.',
+            'As the context store grows, the plan is to eventually migrate to Pinecone for better scalability and more advanced search capabilities. But for v1, keeping it simple and fast was the right call.',
+          ],
+        },
+      ],
+    },
+    results: {
+      items: [
+        {
+          title: 'Accuracy',
+          paragraphs: [
+            'The [[/projects/context-engineering|context engineering framework]] was the biggest lever for answer quality. Early versions of the chatbot (a single agent querying the raw Semantic Layer with minimal context) produced useful answers roughly 20-30% of the time. Most failures weren\'t LLM failures; they were context failures. The model didn\'t know the specific business context or data nuance that are only applicable to your company.',
+            'After building the enriched metadata framework - adding business context, synonyms, example questions, related metrics, and usage guidance to every metric and dimension - accuracy jumped to ~80%. The model went from guessing at intent to having a structured understanding of what each metric means, how it\'s used, and what users typically want when they ask about it.',
+          ],
+        },
+        {
+          title: 'Speed',
+          paragraphs: [
+            'Before the chatbot, getting an answer to a data question meant Slacking the data team and waiting for someone to pick it up, understand the ask, write a query, and share the results. That process typically took days, sometimes weeks depending on the team\'s queue and the complexity of the request.',
+            'With the chatbot, most questions are answered in minutes.',
+          ],
+        },
+        {
+          title: 'Cost efficiency',
+          paragraphs: [
+            'The multi-agent architecture with model-per-task routing brought the average cost per query down from ~$0.70-0.80 (single agent, single model) to ~$0.20 - roughly a 70-75% reduction. The savings come from using cheaper, faster models for tasks that don\'t need heavyweight reasoning while reserving the most capable model for the accuracy-critical retrieval step.',
+            'For a tool that serves the entire data needs of a cross-functional team, the total cost is remarkably low.',
+          ],
+        },
+      ],
+    },
+    whatsNext: {
+      intro: 'This project is actively evolving. A few things on the roadmap:',
+      items: [
+        {
+          title: 'Text-to-SQL fallback',
+          paragraphs: [
+            'The chatbot currently queries data exclusively through the dbt Semantic Layer, which keeps answers grounded and avoids hallucinated SQL. But not everything lives in the Semantic Layer yet. The next step is adding a text-to-SQL capability that kicks in when the requested data isn\'t available through the SL, using the agent\'s existing knowledge of the Semantic Layer schema as context to generate accurate custom SQL, rather than starting from scratch.',
+          ],
+        },
+        {
+          title: 'LangSmith for observability and evaluation',
+          paragraphs: [
+            'Right now, understanding why a query failed or returned a low-confidence answer requires digging through Cloud Logging. Adding LangSmith would give the team structured tracing across the full agent pipeline: every LLM call, tool invocation, and retrieval step, making it much easier to debug edge cases and systematically improve accuracy over time.',
+          ],
+        },
+        {
+          title: 'Evolving the Data Operations Agent',
+          paragraphs: [
+            'The current Data Ops agent handles metadata queries, but there\'s an opportunity to expand it into a more general-purpose assistant for the data team itself: handling day-to-day dbt operations like debugging job errors, surfacing model lineage, or answering questions about test coverage. This would make the bot useful not just for stakeholders asking data questions, but for the engineers maintaining the platform.',
+          ],
+        },
+        {
+          title: 'Pinecone migration',
+          paragraphs: [
+            'As the context store grows and more metrics, dimensions, and few-shot examples are added, the baked-in ChromaDB approach will eventually hit its limits. Migrating to Pinecone will provide better scalability, more advanced search capabilities, and decouple the vector store lifecycle from the application deploy cycle.',
+          ],
+        },
+      ],
+    },
     stack: ['OpenAI GPT-5 / GPT-5-mini / GPT-4o-mini', 'ChromaDB', 'dbt MCP Server (HTTP/SSE)', 'dbt Cloud Discovery API (GraphQL)', 'Google Cloud Run', 'Google Cloud Build', 'Google Cloud Scheduler', 'Google Cloud Storage', 'GCP Secret Manager', 'GCP Cloud Logging', 'Snowflake', 'Flask', 'Python', 'Docker', 'GitHub Actions'],
   },
 }
