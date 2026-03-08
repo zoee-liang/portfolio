@@ -25,6 +25,20 @@ function RichText({ text }) {
   })
 }
 
+// Calculate reading time from all text content in a project detail
+function getReadingTime(detail) {
+  if (!detail) return 0
+  let text = ''
+  const extractText = (val) => {
+    if (typeof val === 'string') text += ' ' + val
+    else if (Array.isArray(val)) val.forEach(extractText)
+    else if (val && typeof val === 'object') Object.values(val).forEach(extractText)
+  }
+  extractText(detail)
+  const words = text.trim().split(/\s+/).length
+  return Math.max(1, Math.round(words / 200))
+}
+
 const diagramComponents = {
   'ai-data-chatbot-architecture': ArchitectureDiagram,
   'ai-data-chatbot-cicd': CiCdDiagram,
@@ -100,7 +114,7 @@ export default function ProjectDetail() {
           <span className="squiggly-underline">{project.title}</span>
         </h2>
 
-        <div className="flex flex-wrap gap-1.5 mb-6">
+        <div className="flex flex-wrap gap-1.5 mb-4">
           {project.tags.map((tag) => (
             <span
               key={tag}
@@ -110,6 +124,14 @@ export default function ProjectDetail() {
             </span>
           ))}
         </div>
+
+        {detail && (
+          <div className="flex items-center gap-3 text-xs text-gray-400 mb-6">
+            {detail.date && <span>{detail.date}</span>}
+            {detail.date && <span>&middot;</span>}
+            <span>{getReadingTime(detail)} min read</span>
+          </div>
+        )}
 
         <div className="outcome-bar flex items-start gap-2 text-sm text-emerald-700 border border-emerald-200 rounded px-3 py-2 bg-emerald-50/60 mb-12">
           <span className="shrink-0">&#10003;</span>

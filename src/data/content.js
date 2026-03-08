@@ -136,6 +136,7 @@ export const projects = [
 
 export const projectDetails = {
   'ai-data-chatbot': {
+    date: 'March 2026',
     overview: [
       'This project started from a simple question: how do we make our data accessible to everyone, not just guarded in a BI tool?',
       'I built a multi-agent Slack chatbot that lets anyone on the team ask data questions in plain English on a tool they use everyday, and in a cost effective way. Behind the scenes, it uses LLM-based routing to classify queries and dispatch them to specialized agents - one for data analysis, one for metadata operations - before a document authoring agent synthesizes everything into a clean, readable report with dashboard links, CSV downloads and visualizations.',
@@ -147,7 +148,7 @@ export const projectDetails = {
         'The system runs on Google Cloud Run as a stateless Flask HTTP webhook. When a user sends a message in Slack, the request hits the webhook endpoint, which verifies the Slack signature and routes it through the multi-agent pipeline.',
         'The Orchestrator Agent (GPT-5-mini) classifies each query as a metadata, data analysis, or out-of-scope request. Data analysis queries go to the Data Analyst Agent, which runs a two-phase workflow: a retrieval phase (GPT-5) that searches vector stores and queries metrics via the dbt MCP server, followed by an analysis phase (GPT-5-mini) that generates and executes Python code in a sandboxed environment.',
         'Metadata queries go to the Data Operations Agent, which retrieves relevant metadata and can call the compiled SQL tool when needed.',
-        'All results flow into the Document Authoring Agent (GPT-4o-mini), which synthesizes findings into a structured report with key findings, insights, related Looker dashboard links, a downloadable CSV, and visualizations when applicable. A confidence scorer evaluates the quality of each response based on vector similarity, query success, and result completeness.',
+        'All results flow into the Document Authoring Agent (GPT-4o-mini), which synthesizes findings into a structured report with key findings, insights, related Looker dashboard links, a downloadable CSV, and visualizations when applicable. A confidence scorer evaluates the quality of each response based on vector similarity, query success, and result completeness. If the confidence score falls below a threshold, the bot would let the user know - suggesting they rephrase or break down a complex question, or tag the data team for support.',
       ],
     },
     cicd: {
@@ -183,7 +184,7 @@ export const projectDetails = {
           title: 'Multi-agent architecture',
           paragraphs: [
             'The system didn\'t start as a multi-agent pipeline. Early versions used a single agent that handled everything: routing, retrieval, analysis, response formatting. It worked for simple questions, but as the scope grew, accuracy, speed and cost started to suffer. A single powerful model doing everything was expensive and slow, and a single cheap model doing everything wasn\'t accurate enough.',
-            'Breaking the system into specialized agents solved this in a few ways (inspired by and huge shoutout to [[https://www.youtube.com/watch?v=0x60vgPx_k0|this dbt Coalesce talk]]!). Each agent could use the right model for its task: GPT-5 for the retrieval phase where accuracy is most critical (finding the right metrics and dimensions), GPT-5-mini for orchestration and analysis where the task is more straightforward once you have the right data, and GPT-4o-mini for document authoring where the job is formatting and synthesis rather than reasoning. This cut costs significantly while actually improving accuracy, because each model is operating in the part of the problem it\'s best suited for. It also improved latency - cheaper models are faster, and most of the pipeline doesn\'t need the heavyweight model.',
+            'Breaking the system into specialized agents solved this in a few ways (inspired by [[https://www.youtube.com/watch?v=0x60vgPx_k0|this great dbt Coalesce talk]]!). Each agent could use the right model for its task: GPT-5 for the retrieval phase where accuracy is most critical (finding the right metrics and dimensions), GPT-5-mini for orchestration and analysis where the task is more straightforward once you have the right data, and GPT-4o-mini for document authoring where the job is formatting and synthesis rather than reasoning. This cut costs significantly while actually improving accuracy, because each model is operating in the part of the problem it\'s best suited for. It also improved latency - cheaper models are faster, and most of the pipeline doesn\'t need the heavyweight model.',
           ],
         },
         {
