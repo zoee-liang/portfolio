@@ -14,23 +14,57 @@ import FallingLeaves from './components/FallingLeaves'
 import { Analytics } from '@vercel/analytics/react'
 import { projects } from './data/content'
 
-const pageTitles = {
-  '/': 'Zoe Liang - Data Platform Engineer',
-  '/experience': 'Experience - Zoe Liang',
-  '/skills': 'Skills - Zoe Liang',
-  '/projects': 'Projects - Zoe Liang',
-  '/contact': 'Contact - Zoe Liang',
+const defaultDescription = 'Building, architecting, and automating. ✨'
+
+const pageMeta = {
+  '/': {
+    title: 'Zoe Liang, Senior Data Platform Engineer',
+    description: defaultDescription,
+  },
+  '/experience': {
+    title: 'Experience - Zoe Liang',
+    description: 'Work experience across the modern data stack, from founding data hire to senior platform engineer.',
+  },
+  '/skills': {
+    title: 'Skills - Zoe Liang',
+    description: 'Technical skills in data platforms, orchestration, BI, observability, and AI/LLM engineering.',
+  },
+  '/projects': {
+    title: 'Projects - Zoe Liang',
+    description: 'Featured projects including AI data chatbot, context engineering, CI/CD pipelines, and Snowflake optimization.',
+  },
 }
 
-// Build project detail titles from data
+// Build project detail meta from data
 projects.forEach((p) => {
-  pageTitles[`/projects/${p.slug}`] = `${p.title} - Zoe Liang`
+  pageMeta[`/projects/${p.slug}`] = {
+    title: `${p.title} - Zoe Liang`,
+    description: p.description,
+  }
 })
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
-    document.title = pageTitles[pathname] || 'Zoe Liang - Data Platform Engineer'
+    const meta = pageMeta[pathname] || { title: 'Zoe Liang, Senior Data Platform Engineer', description: defaultDescription }
+    document.title = meta.title
+
+    // Update meta description
+    const descTag = document.querySelector('meta[name="description"]')
+    if (descTag) descTag.setAttribute('content', meta.description)
+
+    // Update Open Graph tags
+    const ogDesc = document.querySelector('meta[property="og:description"]')
+    if (ogDesc) ogDesc.setAttribute('content', meta.description)
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) ogTitle.setAttribute('content', meta.title)
+
+    // Update Twitter tags
+    const twDesc = document.querySelector('meta[name="twitter:description"]')
+    if (twDesc) twDesc.setAttribute('content', meta.description)
+    const twTitle = document.querySelector('meta[name="twitter:title"]')
+    if (twTitle) twTitle.setAttribute('content', meta.title)
+
     if (hash) {
       document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' })
     } else {
