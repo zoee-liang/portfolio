@@ -274,4 +274,168 @@ export const projectDetails = {
     },
     stack: ['OpenAI GPT-5 / GPT-5-mini / GPT-4o-mini', 'ChromaDB', 'dbt MCP Server (HTTP/SSE)', 'dbt Cloud Discovery API (GraphQL)', 'Google Cloud Run', 'Google Cloud Build', 'Google Cloud Scheduler', 'Google Cloud Storage', 'GCP Secret Manager', 'GCP Cloud Logging', 'Snowflake', 'Flask', 'Python', 'Docker', 'GitHub Actions'],
   },
+  'context-engineering': {
+    date: 'March 2026',
+    overviewDiagramAfter: 1,
+    overview: [
+      'An LLM knows what a "pageview" is generically, but it doesn\'t know _your_ pageviews, _your_ funnel definitions, _your_ metric relationships, or _your_ business logic. This gap is why most AI data tools fail - they produce plausible-sounding answers that are subtly wrong because they lack the domain context to get it right.',
+      'Context Engineering is the discipline of dynamically filling the context window of an AI model with information that maximizes its chances of success ([[https://towardsdatascience.com/context-engineering-as-your-competitive-edge/|Lipenkova, Towards Data Science, 2026]]). The article identifies three components of effective context: Knowledge, Tools, and Memory.',
+      'This project applies that concept to the dbt Semantic Layer: a five-layer system that transforms raw column definitions into a rich, searchable knowledge base that powers the [[/projects/ai-data-chatbot|AI Data Chatbot]]\'s retrieval pipeline.',
+      'The result: answer accuracy jumped from ~20-30% (generic AI querying raw metrics) to ~80% (AI with structured business context) - without changing the model.',
+    ],
+    architecture: {
+      caption: 'Five-layer context engineering pipeline',
+      description: [
+        'The system spans two repositories and multiple CI/CD pipelines. In the dbt repo, analytics engineers define data models (Layer 1) and enrich them with business metadata (Layer 2). A Python script auto-syncs mart columns into semantic layer dimensions on every PR (Layer 3). On merge, a GitHub Actions workflow parses the enriched YAML, constructs embedding text, and indexes everything into ChromaDB vector stores (Layer 4). At query time, the AI agent uses agentic retrieval tools to search, inspect, and build accurate queries (Layer 5).',
+        'Each layer builds on the one before it. The data models provide the foundation, metadata enrichment adds business understanding, the sync pipeline keeps dimensions current, vector indexing makes it searchable, and agentic retrieval puts it all in the AI\'s hands at query time.',
+      ],
+    },
+    metadataFramework: {
+      title: 'The Metadata Framework',
+      description: [
+        'This is the core innovation. Every measure and dimension in the Semantic Layer gets enriched with structured metadata that teaches the AI how to use it - not just what it is, but when to use it, what it relates to, and how business users think about it.',
+        'For measures, the metadata includes fields like `business_context` (explaining when and why to use the metric), `synonyms` (mapping business language to technical names), `example_questions` (showing natural-language patterns), `related_metrics` (forming a navigable knowledge graph), `funnel_stage` and `funnel_position` (encoding business process structure), and `commonly_used_dimensions` (guiding the AI to pick the right groupings).',
+        'For dimensions, the metadata includes `cardinality` (telling the AI whether it\'s safe to `GROUP BY`), `example_values` (showing what the data actually looks like), `usage_guidance` (passing along tribal knowledge like "use this as the primary time dimension"), and `related_dimensions` (linking dimensions that are often used together).',
+        'This represents years of institutional knowledge from the analytics team, systematically encoded in a machine-readable format. When the AI searches for "product awareness trends," the `synonyms` and `business_context` surface the right metrics - and the `commonly_used_dimensions` and `cardinality` metadata guide it to build efficient, correct queries.',
+      ],
+    },
+    vectorIndexing: {
+      title: 'Vector Store Indexing',
+      caption: 'Sample embedding text - enriched fields (amber) make this searchable by intent, not just metric name',
+      description: [
+        'When the CI/CD workflow runs, it triggers a three-stage indexing pipeline that transforms structured YAML metadata into searchable vectors:',
+        'First, a parser reads all semantic model YAMLs and extracts structured data for each metric - name, description, type, aggregation, and all enriched metadata fields.',
+        'Second, a formatting function constructs an embedding text document for each metric, combining core identification with all the enriched context into a single searchable string.',
+        'The embedding text is the critical bridge - it determines what the AI can find via semantic search. A user asking "how many people are aware of the product?" would match on Business Context, Example Questions, and Also Known As - not just the technical metric name. The richer the metadata, the better the search results.',
+        'Each metric is then stored in ChromaDB with both the embedding text (for search via `text-embedding-3-small`) and structured metadata (for filtering and retrieval). Dimensions are stored with fully-qualified names using the pattern `{entity}__{dimension_name}`, which is required by the dbt Semantic Layer API for query construction.',
+      ],
+    },
+    agenticRetrieval: {
+      title: 'Agentic Retrieval at Query Time',
+      description: [
+        'At query time, the AI agent uses two tools in an agentic loop (up to 8 turns) to find and validate the right metrics before building a query. The first tool, `search_vector_store`, performs semantic search across the enriched metadata - matching on `business_context`, `synonyms`, and `example_questions` rather than just metric names. Results are filtered by a similarity threshold (0.4) and ranked by relevance.',
+        'The second tool, `get_metric_dimensions`, returns the exact dimension syntax and enriched metadata (`cardinality`, `example_values`, `usage_guidance`) for selected metrics. This is critical: the AI doesn\'t just find the right metric, it learns how to query it correctly.',
+        'The system also tracks confidence at multiple levels. Similarity scores above 0.75 indicate high confidence; scores between 0.50-0.74 are medium; and anything below 0.40 is filtered out entirely to prevent hallucination. Every response includes a confidence indicator so users know when to trust the answer and when to dig deeper.',
+      ],
+    },
+    cicd: {
+      title: 'Keeping Context Fresh',
+      caption: 'Automated CI/CD pipelines keeping context fresh',
+      description: [
+        'Manual metadata maintenance doesn\'t scale. If context decays, the chatbot\'s answers degrade. Two automated pipelines ensure the AI always has current knowledge.',
+        'Pipeline 1 runs on every PR: a Python script scans mart model columns and auto-generates corresponding semantic layer dimensions with placeholder metadata. It uses a merge strategy that preserves existing enrichments (`business_context`, `synonyms`, etc.) while adding new columns - so analyst work is never overwritten. If changes are detected, the script commits them back to the PR branch automatically.',
+        'Pipeline 2 runs on every merge to master: a GitHub Actions workflow rebuilds all vector stores (dbt metadata, semantic layer, few-shot examples), builds a metadata snapshot with AI-powered domain classification, uploads everything to Cloud Storage, and triggers a Cloud Build to redeploy the chatbot.',
+        'The lifecycle is seamless: an analyst adds a new column to a mart model, the PR auto-generates the semantic dimension, the analyst enriches it with business context, and on merge the chatbot can query the new metric - with zero manual intervention.',
+      ],
+    },
+    decisions: {
+      items: [
+        {
+          title: 'Structured metadata over raw text',
+          paragraphs: [
+            'Early experiments dumped metric names and descriptions into a vector database and hoped for the best. This is the "naive RAG" approach - and it produced useful answers roughly 20-30% of the time. Most failures weren\'t LLM failures; they were context failures.',
+            'The structured metadata approach - `business_context`, `synonyms`, `example_questions`, `related_metrics`, `funnel_stage`, `commonly_used_dimensions` - gives the AI a conceptual map of the data domain. Instead of pattern-matching on metric names, the AI understands how metrics relate to each other, which dimensions are appropriate for grouping, and what business users actually mean when they ask vague questions.',
+          ],
+        },
+        {
+          title: 'YAML as the metadata store',
+          paragraphs: [
+            'Metadata lives in YAML files alongside dbt semantic model definitions rather than in an external database or configuration service. This keeps metadata in the same repo as the models it describes, which means it flows through the same code review process: PRs, approvals, version history.',
+            'The tradeoff is that YAML isn\'t queryable the way a database would be. But for this use case - metadata that changes on the same cadence as data models, maintained by the same people - co-location and reviewability matter more than query flexibility.',
+          ],
+        },
+        {
+          title: 'Merge strategy for dimension sync',
+          paragraphs: [
+            'The dimension generation script uses a merge-not-replace strategy: when syncing mart columns to semantic dimensions, it preserves all existing enrichments (`business_context`, `synonyms`, `cardinality`, `usage_guidance`) while adding new columns with placeholder metadata. This was essential because the enrichment work is done by analysts manually - overwriting it would destroy the most valuable part of the system.',
+            'The script also force-updates descriptions from the mart model, so documentation changes flow through automatically. This balances automation (new columns appear without manual effort) with preservation (enrichment work is never lost).',
+          ],
+        },
+        {
+          title: 'Domain experts as metadata authors',
+          paragraphs: [
+            'Engineers build the pipeline; analysts write the `business_context`, `example_questions`, and `synonyms`. Neither can do the other\'s job effectively. An engineer might write technically accurate descriptions, but the business context, the tribal knowledge about when to use one metric over another - that comes from the people who use the data daily.',
+            'This is a deliberate organizational design choice. The metadata framework provides the structure; domain experts fill it with knowledge. The CI/CD automation ensures their work reaches the AI without manual deployment steps.',
+          ],
+        },
+      ],
+    },
+    results: {
+      items: [
+        {
+          title: 'Accuracy',
+          paragraphs: [
+            'The context engineering framework was the biggest lever for answer quality. Early versions of the [[/projects/ai-data-chatbot|AI Data Chatbot]] (a single agent querying the raw Semantic Layer with minimal context) produced useful answers roughly 20-30% of the time. After building the enriched metadata framework, accuracy jumped to ~80%.',
+            'The improvement came from the AI having a structured understanding of what each metric means, how it\'s used, and what users typically want when they ask about it - rather than guessing based on metric names alone.',
+          ],
+        },
+        {
+          title: 'The competitive moat',
+          paragraphs: [
+            'Any team can spin up an LLM with a vector database. The model is interchangeable. The moat is the combination of deep domain knowledge encoded in metadata and the automated pipeline that keeps it current.',
+            'A competitor would need to build the same data model depth, enrich hundreds of metrics with the same quality of business context, build the same CI/CD automation, and accumulate the same few-shot examples from real user interactions. The model is interchangeable. The context is not.',
+          ],
+        },
+        {
+          title: 'Reusable context layer',
+          paragraphs: [
+            'The metadata framework isn\'t just used by the chatbot. Because the enrichments live in the dbt Semantic Layer definitions, they\'re available to any tool that reads from the Semantic Layer - creating a reusable context layer that can power future AI-driven data tools without duplicating the knowledge work.',
+          ],
+        },
+      ],
+    },
+    lessons: {
+      title: 'What We Learned',
+      items: [
+        {
+          title: 'Invest in knowledge representation first, AI second',
+          paragraphs: [
+            'We initially built the chatbot without the metadata enrichment framework, and accuracy suffered - the LLM was guessing at metrics with no understanding of business context. Building the context infrastructure first would have saved significant development time. Once we invested in the enriched metadata layer, accuracy jumped dramatically and the retrieval pipeline became far simpler to build on top of.',
+          ],
+        },
+        {
+          title: 'Automate or it decays',
+          paragraphs: [
+            'CI/CD for context is as important as CI/CD for code. The moment metadata maintenance becomes a manual chore, it stops happening. The two automated pipelines (dimension sync on PR, vector rebuild on merge) ensure the system keeps itself current.',
+          ],
+        },
+        {
+          title: 'Domain experts must be hands-on',
+          paragraphs: [
+            'Analysts write the `business_context`, `example_questions`, and `synonyms`. Engineers build the pipeline. Neither can do the other\'s job. This is what the article mentioned at the beginning calls "_a tight handshake between domain experts and engineers._"',
+          ],
+        },
+        {
+          title: 'Iterate based on real usage',
+          paragraphs: [
+            'Chatbot failures reveal metadata gaps. When the AI picks the wrong metric, the fix is often adding a synonym or clarifying the `business_context` - not changing the model or the retrieval logic. Real usage is the best feedback loop for improving context quality.',
+          ],
+        },
+      ],
+    },
+    whatsNext: {
+      intro: 'The context engineering framework is actively evolving:',
+      items: [
+        {
+          title: 'User-level memory',
+          paragraphs: [
+            'Remembering user preferences across sessions - for example, a product manager who always wants data filtered to a specific region, or a marketing lead who prefers weekly over monthly granularity. This adds a personalization layer that makes the chatbot feel like it knows each user.',
+          ],
+        },
+        {
+          title: 'Feedback loops',
+          paragraphs: [
+            'Chatbot performance metrics feeding back into metadata improvement signals. When the AI consistently misidentifies a metric, that signal should surface as a prompt to improve the `business_context` or add a missing synonym - closing the loop between usage and knowledge quality.',
+          ],
+        },
+        {
+          title: 'Richer relationship graphs',
+          paragraphs: [
+            'More explicit connections between metrics across domains, not just within a single semantic model. Cross-domain relationships (e.g., linking engagement metrics to retention metrics) would allow the AI to surface insights that span business units.',
+          ],
+        },
+      ],
+    },
+    stack: ['dbt Semantic Layer', 'Python', 'ChromaDB', 'OpenAI text-embedding-3-small', 'GitHub Actions', 'Google Cloud Storage', 'YAML', 'dbt Cloud Discovery API'],
+  },
 }

@@ -318,6 +318,300 @@ export function ToolingDiagram() {
   )
 }
 
+function TableRow({ cells, header = false }) {
+  const Tag = header ? 'th' : 'td'
+  return (
+    <tr className={header ? 'border-b border-gray-200' : 'border-b border-gray-100 last:border-0'}>
+      {cells.map((cell, i) => (
+        <Tag key={i} className={`px-3 py-2 text-left text-xs ${
+          header ? 'font-medium text-gray-700' : i === 0 ? 'font-mono text-gray-600 whitespace-nowrap' : 'text-gray-400'
+        }`}>{cell}</Tag>
+      ))}
+    </tr>
+  )
+}
+
+export function MetadataFieldsTable() {
+  return (
+    <div className="py-6 space-y-8">
+      {/* Table */}
+      <div className="sketch-border overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <TableRow header cells={['Field', 'What it tells the AI', 'Business value']} />
+          </thead>
+          <tbody>
+            <TableRow cells={['business_context', 'When and why to use this metric', 'Prevents the AI from selecting wrong metrics for a question']} />
+            <TableRow cells={['example_questions', 'How users actually phrase questions', 'Bridges the gap between business language and technical metric names']} />
+            <TableRow cells={['synonyms', 'Alternative names users might use', '"product awareness" matches even though the metric has a long technical name']} />
+            <TableRow cells={['related_metrics', 'What other metrics connect and how', 'AI can suggest "you might also want to look at..." and navigate funnels']} />
+            <TableRow cells={['commonly_used_dimensions', 'What to group/filter by', 'AI builds correct queries instead of guessing random dimensions']} />
+            <TableRow cells={['funnel_stage', 'Where this sits in the user journey', 'AI understands business process order, not just individual metrics']} />
+            <TableRow cells={['cardinality', 'How many distinct values a dimension has', 'AI avoids grouping by high-cardinality columns that would produce unusable results']} />
+            <TableRow cells={['example_values', 'What actual data values look like', 'AI can validate filters and understand categorical values']} />
+            <TableRow cells={['usage_guidance', 'Best practices and gotchas', 'AI gets the same tribal knowledge a senior analyst would share']} />
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+export function MetadataReasoningDiagram() {
+  return (
+    <div className="flex flex-col items-center gap-1 py-6 max-w-lg mx-auto">
+      {/* User Query */}
+      <Box className="w-full">
+        <div className="font-medium text-gray-700">User Query</div>
+        <div className="text-gray-400 italic">"How is the product doing?"</div>
+      </Box>
+
+      <Arrow />
+
+      {/* Semantic Search */}
+      <div className="w-full sketch-border bg-blue-50/30 border-blue-200 p-4">
+        <div className="font-hand text-sm font-medium text-gray-600 mb-3 text-center">Semantic Search (Vector Store)</div>
+        <div className="text-[10px] text-gray-400 text-center mb-3">Embedding text includes:</div>
+        <div className="grid grid-cols-3 gap-2">
+          <Box>
+            <div className="font-medium text-gray-600">business_context</div>
+            <div className="text-gray-400 mt-0.5">"measuring product awareness..."</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">synonyms</div>
+            <div className="text-gray-400 mt-0.5">"product awareness"</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">example_questions</div>
+            <div className="text-gray-400 mt-0.5">"How many users saw the product..."</div>
+          </Box>
+        </div>
+        <div className="text-center text-[10px] text-gray-400 mt-3 italic">&rarr; Matches on intent, not just keywords</div>
+      </div>
+
+      <Arrow />
+
+      {/* Metric Selection */}
+      <div className="w-full sketch-border bg-amber-50/30 border-amber-200 p-4">
+        <div className="font-hand text-sm font-medium text-gray-600 mb-3 text-center">Metric Selection (LLM Reasoning)</div>
+        <div className="text-[10px] text-gray-400 text-center mb-3">LLM reads:</div>
+        <div className="grid grid-cols-3 gap-2">
+          <Box>
+            <div className="font-medium text-gray-600">related_metrics</div>
+            <div className="text-gray-400 mt-0.5">"click_count is next funnel step"</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">funnel_stage</div>
+            <div className="text-gray-400 mt-0.5">"Awareness" &middot; "1 of 10"</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">category</div>
+            <div className="text-gray-400 mt-0.5">"Product Analytics"</div>
+          </Box>
+        </div>
+        <div className="text-center text-[10px] text-gray-400 mt-3 italic">&rarr; Understands metric relationships and business process</div>
+      </div>
+
+      <Arrow />
+
+      {/* Query Construction */}
+      <div className="w-full sketch-border bg-emerald-50/30 border-emerald-200 p-4">
+        <div className="font-hand text-sm font-medium text-gray-600 mb-3 text-center">Query Construction (Dimension Selection)</div>
+        <div className="text-[10px] text-gray-400 text-center mb-3">LLM reads:</div>
+        <div className="grid grid-cols-3 gap-2">
+          <Box>
+            <div className="font-medium text-gray-600">common_dimensions</div>
+            <div className="text-gray-400 mt-0.5">[event_date, device]</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">cardinality</div>
+            <div className="text-gray-400 mt-0.5">"LOW" (safe to group by)</div>
+          </Box>
+          <Box>
+            <div className="font-medium text-gray-600">example_values</div>
+            <div className="text-gray-400 mt-0.5">["desktop", "mobile", "tablet"]</div>
+          </Box>
+        </div>
+        <div className="text-center text-[10px] text-gray-400 mt-3 italic">&rarr; Builds correct, efficient queries</div>
+      </div>
+    </div>
+  )
+}
+
+export function EmbeddingExampleDiagram() {
+  return (
+    <div className="py-6 max-w-lg mx-auto">
+      <div className="sketch-border bg-gray-50/50 p-4 font-mono text-xs leading-relaxed text-gray-500 space-y-0.5 overflow-x-auto">
+        <div><span className="text-gray-700 font-medium">Metric:</span> product_awareness_user_count</div>
+        <div><span className="text-gray-700 font-medium">Label:</span> Users Who Viewed Product Entry Points</div>
+        <div><span className="text-gray-700 font-medium">Description:</span> Count of unique users who viewed...</div>
+        <div className="pt-1"><span className="text-amber-700 font-medium">Business Context:</span> Use for measuring product awareness</div>
+        <div className="pl-4 text-gray-400">(users who saw entry points but may not have clicked).</div>
+        <div className="pl-4 text-gray-400">This is the first step in the product funnel.</div>
+        <div className="pt-1"><span className="text-amber-700 font-medium">Example Questions:</span> How many users saw the product</div>
+        <div className="pl-4 text-gray-400">entry points last month?; Show me awareness by device type</div>
+        <div className="pt-1"><span className="text-amber-700 font-medium">Also Known As:</span> product awareness, entry point views</div>
+        <div className="pt-1"><span className="text-amber-700 font-medium">Commonly Grouped By:</span> event_date, device_category,</div>
+        <div className="pl-4 text-gray-400">device_os, country</div>
+        <div className="pt-1"><span className="text-amber-700 font-medium">Related Metrics:</span> product_click_user_count (next funnel</div>
+        <div className="pl-4 text-gray-400">step), product_query_user_count (further down funnel)</div>
+        <div className="pt-1"><span className="text-gray-700 font-medium">Category:</span> Product Analytics &gt; Product Funnel</div>
+        <div><span className="text-gray-700 font-medium">Type:</span> simple &middot; <span className="text-gray-700 font-medium">Aggregation:</span> count_distinct</div>
+        <div><span className="text-gray-700 font-medium">Funnel Stage:</span> Awareness (1 of 10)</div>
+      </div>
+    </div>
+  )
+}
+
+export function ContextLifecycleDiagram() {
+  return (
+    <div className="py-6 max-w-lg mx-auto">
+      <div className="flex flex-col items-center gap-1">
+        {/* Step 1 */}
+        <Box className="w-full">
+          <div className="font-medium text-gray-700">Analyst adds new column to mart model</div>
+          <div className="text-gray-400">_model.yml + new column definition</div>
+        </Box>
+
+        <Arrow />
+        <Label>PR opened</Label>
+        <Arrow />
+
+        {/* Step 2 */}
+        <Box className="bg-violet-50/80 border-violet-300 w-full">
+          <div className="font-medium text-gray-700">CI auto-generates semantic dimension</div>
+          <div className="text-gray-400">New dimension added with placeholder metadata</div>
+          <div className="text-gray-400">Existing enrichments preserved (merge strategy)</div>
+        </Box>
+
+        <Arrow />
+        <Label>analyst enriches metadata</Label>
+        <Arrow />
+
+        {/* Step 3 */}
+        <Box accent className="w-full">
+          <div className="font-medium text-gray-700">Analyst adds business context</div>
+          <div className="text-gray-400">business_context &middot; synonyms &middot; example_questions</div>
+          <div className="text-gray-400">related_metrics &middot; cardinality &middot; usage_guidance</div>
+        </Box>
+
+        <Arrow />
+        <Label>merge to master</Label>
+        <Arrow />
+
+        {/* Step 4 */}
+        <Box className="w-full">
+          <div className="font-medium text-gray-700">CI rebuilds all vector stores</div>
+          <div className="text-gray-400">Parse YAML &rarr; construct embedding text &rarr; index to ChromaDB</div>
+          <div className="text-gray-400">Upload to Cloud Storage &rarr; trigger redeploy</div>
+        </Box>
+
+        <Arrow />
+
+        {/* Step 5 */}
+        <Box className="bg-emerald-50/60 border-emerald-200 w-full">
+          <div className="font-hand text-sm font-medium text-gray-700">Chatbot can query the new metric</div>
+          <div className="text-gray-400">Zero manual intervention</div>
+        </Box>
+      </div>
+    </div>
+  )
+}
+
+export function ContextFrameworkDiagram() {
+  return (
+    <div className="py-6">
+      <div className="sketch-border overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <TableRow header cells={['Component', 'Definition', 'My Implementation']} />
+          </thead>
+          <tbody>
+            <TableRow cells={[
+              'Knowledge',
+              'Domain expertise that turns a generic AI into a domain expert',
+              'Metadata Enrichment Framework — business_context, synonyms, related_metrics, funnel_stage, commonly_used_dimensions, usage_guidance',
+            ]} />
+            <TableRow cells={[
+              'Tools',
+              'Business logic that shouldn\'t be left to probabilistic guessing',
+              'dbt MCP server (query execution), search_vector_store (semantic search), get_metric_dimensions (dimension lookup), Python sandbox (analysis)',
+            ]} />
+            <TableRow cells={[
+              'Memory',
+              'Personalization and learning from feedback',
+              'Few-shot examples (proven query patterns), metadata snapshots (what\'s available), confidence scoring (learning what works)',
+            ]} />
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+export function ContextLayersDiagram() {
+  return (
+    <div className="flex flex-col items-center gap-1 py-6 max-w-md mx-auto">
+      {/* Layer 1 */}
+      <Box className="w-full">
+        <div className="font-medium text-gray-700">Layer 1: dbt Data Models</div>
+        <div className="text-gray-500">staging &rarr; intermediate &rarr; marts</div>
+        <div className="text-gray-500">Column definitions &middot; schema YAMLs &middot; doc blocks</div>
+        <div className="text-[10px] text-gray-400 mt-1 italic">Maintained by data &amp; analytics engineers</div>
+      </Box>
+
+      <Arrow />
+      <Label>columns flow into semantic layer</Label>
+      <Arrow />
+
+      {/* Layer 2 */}
+      <Box accent className="w-full">
+        <div className="font-medium text-gray-700">Layer 2: Metadata Enrichment</div>
+        <div className="text-gray-500">business_context &middot; synonyms &middot; example_questions</div>
+        <div className="text-gray-500">related_metrics &middot; funnel_stage &middot; commonly_used_dimensions</div>
+        <div className="text-gray-500">cardinality &middot; example_values &middot; usage_guidance</div>
+        <div className="text-[10px] text-gray-400 mt-1 italic">Maintained by analysts &amp; domain experts</div>
+      </Box>
+
+      <Arrow />
+      <Label>PR triggers dimension sync</Label>
+      <Arrow />
+
+      {/* Layer 3 */}
+      <Box className="bg-violet-50/80 border-violet-300 w-full">
+        <div className="font-medium text-gray-700">Layer 3: Semantic Layer Sync</div>
+        <div className="text-gray-500">Python script auto-generates dimensions from mart columns</div>
+        <div className="text-gray-500">merge strategy &middot; preserves enrichments &middot; adds new columns</div>
+        <div className="text-[10px] text-gray-400 mt-1 italic">Automated via GitHub Actions on every PR</div>
+      </Box>
+
+      <Arrow />
+      <Label>merge triggers vector rebuild</Label>
+      <Arrow />
+
+      {/* Layer 4 */}
+      <Box className="w-full">
+        <div className="font-medium text-gray-700">Layer 4: Vector Store Indexing</div>
+        <div className="text-gray-500">Parse enriched YAML &rarr; construct embedding text &rarr; ChromaDB</div>
+        <div className="text-gray-500">semantic_layer &middot; dbt_metadata &middot; few_shot_examples</div>
+        <div className="text-[10px] text-gray-400 mt-1 italic">Automated via GitHub Actions on every merge</div>
+      </Box>
+
+      <Arrow />
+      <Label>query time</Label>
+      <Arrow />
+
+      {/* Layer 5 */}
+      <Box className="bg-emerald-50/60 border-emerald-200 w-full">
+        <div className="font-medium text-gray-700">Layer 5: Agentic Retrieval</div>
+        <div className="text-gray-500">search_vector_store() &middot; get_metric_dimensions()</div>
+        <div className="text-gray-500">Agentic tool loop (up to 8 turns) &middot; confidence scoring</div>
+        <div className="text-[10px] text-gray-400 mt-1 italic">Powers the AI Data Chatbot at runtime</div>
+      </Box>
+    </div>
+  )
+}
+
 export function CiCdDiagram() {
   return (
     <div className="flex flex-col items-center gap-1 py-6 max-w-sm mx-auto">

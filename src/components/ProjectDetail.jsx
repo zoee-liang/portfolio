@@ -2,26 +2,35 @@ import { useParams, Link } from 'react-router-dom'
 import { useInView } from '../hooks/useInView'
 import { projects, projectDetails } from '../data/content'
 import { SquigglyDivider } from './Doodles'
-import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram } from './ProjectDiagrams'
+import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram, ContextLayersDiagram, MetadataFieldsTable, MetadataReasoningDiagram, EmbeddingExampleDiagram, ContextLifecycleDiagram, ContextFrameworkDiagram } from './ProjectDiagrams'
 
-// Parses [[url|text]] into highlighted Link elements (internal or external)
+// Parses [[url|text]] into Links and `code` into inline code elements
 function RichText({ text }) {
-  const parts = text.split(/\[\[([^\]]+)\]\]/g)
+  const parts = text.split(/(\[\[[^\]]+\]\]|`[^`]+`|_[^_]+_)/g)
   return parts.map((part, i) => {
-    if (i % 2 === 0) return part
-    const [url, label] = part.split('|')
-    if (url.startsWith('http')) {
+    if (part.startsWith('[[') && part.endsWith(']]')) {
+      const inner = part.slice(2, -2)
+      const [url, label] = inner.split('|')
+      if (url.startsWith('http')) {
+        return (
+          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="highlight hover-squiggly font-medium text-gray-900">
+            {label}
+          </a>
+        )
+      }
       return (
-        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="highlight hover-squiggly font-medium text-gray-900">
+        <Link key={i} to={url} className="highlight hover-squiggly font-medium text-gray-900">
           {label}
-        </a>
+        </Link>
       )
     }
-    return (
-      <Link key={i} to={url} className="highlight hover-squiggly font-medium text-gray-900">
-        {label}
-      </Link>
-    )
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} className="text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">{part.slice(1, -1)}</code>
+    }
+    if (part.startsWith('_') && part.endsWith('_')) {
+      return <em key={i}>{part.slice(1, -1)}</em>
+    }
+    return part
   })
 }
 
@@ -44,6 +53,12 @@ const diagramComponents = {
   'ai-data-chatbot-cicd': CiCdDiagram,
   'ai-data-chatbot-dbtPipeline': DbtPipelineDiagram,
   'ai-data-chatbot-tooling': ToolingDiagram,
+  'context-engineering-architecture': ContextLayersDiagram,
+  'context-engineering-metadataFramework': MetadataFieldsTable,
+  'context-engineering-metadataReasoning': MetadataReasoningDiagram,
+  'context-engineering-vectorIndexing': EmbeddingExampleDiagram,
+  'context-engineering-cicd': ContextLifecycleDiagram,
+  'context-engineering-contextFramework': ContextFrameworkDiagram,
 }
 
 function Section({ title, children, delay = 0 }) {
@@ -148,9 +163,20 @@ export default function ProjectDetail() {
             <Section title="Overview">
               <div className="space-y-4">
                 {detail.overview.map((p, i) => (
-                  <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                  <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                 ))}
               </div>
+              {(() => {
+                const Diagram = diagramComponents[`${slug}-contextFramework`]
+                return Diagram ? (
+                  <figure className="my-8">
+                    <Diagram />
+                    <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                      Mapping the Knowledge / Tools / Memory framework to implementation
+                    </figcaption>
+                  </figure>
+                ) : null
+              })()}
             </Section>
 
             {/* Architecture */}
@@ -158,7 +184,7 @@ export default function ProjectDetail() {
               <Section title="Architecture" delay={100}>
                 <div className="space-y-4 mb-6">
                   {detail.architecture.description.map((p, i) => (
-                    <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                   ))}
                 </div>
                 {(() => {
@@ -177,12 +203,80 @@ export default function ProjectDetail() {
               </Section>
             )}
 
+            {/* Metadata Framework */}
+            {detail.metadataFramework && (
+              <Section title={detail.metadataFramework.title} delay={100}>
+                <div className="space-y-4 mb-6">
+                  {detail.metadataFramework.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+                {(() => {
+                  const Table = diagramComponents[`${slug}-metadataFramework`]
+                  return Table ? (
+                    <figure className="my-8">
+                      <Table />
+                      <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                        Every metadata field serves as operational instructions for the AI
+                      </figcaption>
+                    </figure>
+                  ) : null
+                })()}
+                {(() => {
+                  const Reasoning = diagramComponents[`${slug}-metadataReasoning`]
+                  return Reasoning ? (
+                    <figure className="my-8">
+                      <Reasoning />
+                      <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                        How enriched metadata maps to the LLM's reasoning pipeline
+                      </figcaption>
+                    </figure>
+                  ) : null
+                })()}
+              </Section>
+            )}
+
+            {/* Vector Store Indexing */}
+            {detail.vectorIndexing && (
+              <Section title={detail.vectorIndexing.title} delay={100}>
+                <div className="space-y-4 mb-6">
+                  {detail.vectorIndexing.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+                {(() => {
+                  const Diagram = diagramComponents[`${slug}-vectorIndexing`]
+                  return Diagram ? (
+                    <figure className="my-8">
+                      <Diagram />
+                      {detail.vectorIndexing.caption && (
+                        <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                          {detail.vectorIndexing.caption}
+                        </figcaption>
+                      )}
+                    </figure>
+                  ) : null
+                })()}
+              </Section>
+            )}
+
+            {/* Agentic Retrieval */}
+            {detail.agenticRetrieval && (
+              <Section title={detail.agenticRetrieval.title} delay={100}>
+                <div className="space-y-4">
+                  {detail.agenticRetrieval.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
             {/* CI/CD */}
             {detail.cicd && (
-              <Section title="CI/CD Pipeline" delay={100}>
+              <Section title={detail.cicd.title || "CI/CD Pipeline"} delay={100}>
                 <div className="space-y-4 mb-6">
                   {detail.cicd.description.map((p, i) => (
-                    <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                   ))}
                 </div>
                 {(() => {
@@ -206,7 +300,7 @@ export default function ProjectDetail() {
               <Section title="dbt Repo CI/CD Pipeline" delay={100}>
                 <div className="space-y-4 mb-6">
                   {detail.dbtPipeline.description.map((p, i) => (
-                    <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                   ))}
                 </div>
                 {(() => {
@@ -230,7 +324,7 @@ export default function ProjectDetail() {
               <Section title="Infrastructure Optimization" delay={100}>
                 <div className="space-y-4">
                   {detail.infrastructure.description.map((p, i) => (
-                    <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                   ))}
                 </div>
               </Section>
@@ -241,7 +335,7 @@ export default function ProjectDetail() {
               <Section title="Tooling & Infrastructure" delay={100}>
                 <div className="space-y-4 mb-6">
                   {detail.tooling.description.map((p, i) => (
-                    <p key={i} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                   ))}
                 </div>
                 {(() => {
@@ -255,6 +349,17 @@ export default function ProjectDetail() {
               </Section>
             )}
 
+            {/* Context Framework */}
+            {detail.contextFramework && (
+              <Section title={detail.contextFramework.title} delay={100}>
+                <div className="space-y-4">
+                  {detail.contextFramework.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
             {/* Decisions & Tradeoffs */}
             {detail.decisions && (
               <Section title="Decisions & Tradeoffs" delay={100}>
@@ -264,7 +369,7 @@ export default function ProjectDetail() {
                       <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
                       <div className="space-y-4">
                         {item.paragraphs.map((p, j) => (
-                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                          <p key={j} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                         ))}
                       </div>
                     </div>
@@ -282,7 +387,25 @@ export default function ProjectDetail() {
                       <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
                       <div className="space-y-4">
                         {item.paragraphs.map((p, j) => (
-                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                          <p key={j} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {/* Lessons */}
+            {detail.lessons && (
+              <Section title={detail.lessons.title} delay={100}>
+                <div className="space-y-10">
+                  {detail.lessons.items.map((item, i) => (
+                    <div key={i}>
+                      <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
+                      <div className="space-y-4">
+                        {item.paragraphs.map((p, j) => (
+                          <p key={j} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                         ))}
                       </div>
                     </div>
@@ -301,7 +424,7 @@ export default function ProjectDetail() {
                       <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{item.title}</h4>
                       <div className="space-y-4">
                         {item.paragraphs.map((p, j) => (
-                          <p key={j} className="text-gray-500 text-base leading-relaxed">{p.includes('[[') ? <RichText text={p} /> : p}</p>
+                          <p key={j} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
                         ))}
                       </div>
                     </div>
