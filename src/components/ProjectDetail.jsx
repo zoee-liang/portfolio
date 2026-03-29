@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useInView } from '../hooks/useInView'
 import { projects, projectDetails } from '../data/content'
 import { SquigglyDivider } from './Doodles'
-import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram, ContextLayersDiagram, MetadataFieldsTable, MetadataReasoningDiagram, EmbeddingExampleDiagram, ContextLifecycleDiagram, ContextFrameworkDiagram } from './ProjectDiagrams'
+import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram, ContextLayersDiagram, MetadataFieldsTable, MetadataReasoningDiagram, EmbeddingExampleDiagram, ContextLifecycleDiagram, ContextFrameworkDiagram, CiCdEnvironmentsDiagram, CiCdBeforeDiagram, CiCdAfterDiagram, CiCdJobsDiagram } from './ProjectDiagrams'
 
 // Parses [[url|text]] into Links and `code` into inline code elements
 function RichText({ text }) {
@@ -59,6 +59,10 @@ const diagramComponents = {
   'context-engineering-vectorIndexing': EmbeddingExampleDiagram,
   'context-engineering-cicd': ContextLifecycleDiagram,
   'context-engineering-contextFramework': ContextFrameworkDiagram,
+  'cicd-data-pipeline-architecture': CiCdEnvironmentsDiagram,
+  'cicd-data-pipeline-before': CiCdBeforeDiagram,
+  'cicd-data-pipeline-after': CiCdAfterDiagram,
+  'cicd-data-pipeline-jobs': CiCdJobsDiagram,
 }
 
 function Section({ title, children, delay = 0 }) {
@@ -197,6 +201,119 @@ export default function ProjectDetail() {
                           {detail.architecture.caption}
                         </figcaption>
                       )}
+                    </figure>
+                  ) : null
+                })()}
+              </Section>
+            )}
+
+            {/* Problem */}
+            {detail.problem && (
+              <Section title={detail.problem.title} delay={100}>
+                <div className="space-y-4 mb-8">
+                  {detail.problem.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+                {detail.problem.items && (
+                  <div className="space-y-6">
+                    {detail.problem.items.map((item, i) => (
+                      <div key={i}>
+                        <h4 className="font-hand text-lg font-medium text-gray-800 mb-3">{item.title}</h4>
+                        <div className="space-y-4">
+                          {item.paragraphs.map((p, j) => (
+                            <p key={j} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Section>
+            )}
+
+            {/* Deployment Pipeline (before/after) */}
+            {detail.deploymentPipeline && (
+              <Section title={detail.deploymentPipeline.title} delay={100}>
+                {/* Before */}
+                <div className="mb-10">
+                  <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{detail.deploymentPipeline.before.title}</h4>
+                  <div className="space-y-4 mb-6">
+                    {detail.deploymentPipeline.before.description.map((p, i) => (
+                      <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                    ))}
+                  </div>
+                  {(() => {
+                    const Diagram = diagramComponents[`${slug}-before`]
+                    return Diagram ? (
+                      <figure className="my-8">
+                        <Diagram />
+                        <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                          Before: direct-to-production workflow
+                        </figcaption>
+                      </figure>
+                    ) : null
+                  })()}
+                </div>
+
+                {/* After */}
+                <div>
+                  <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{detail.deploymentPipeline.after.title}</h4>
+                  <div className="space-y-4 mb-4">
+                    {detail.deploymentPipeline.after.description.map((p, i) => (
+                      <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                    ))}
+                  </div>
+                  {detail.deploymentPipeline.after.steps && (
+                    <ol className="space-y-2 mb-6 pl-1">
+                      {detail.deploymentPipeline.after.steps.map((step, i) => (
+                        <li key={i} className="flex gap-3 text-sm text-gray-500 leading-relaxed">
+                          <span className="text-gray-300 font-mono text-xs mt-0.5 shrink-0">{i + 1}.</span>
+                          <RichText text={step} />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {detail.deploymentPipeline.after.summary && (
+                    <p className="text-gray-500 text-base leading-relaxed mb-6"><RichText text={detail.deploymentPipeline.after.summary} /></p>
+                  )}
+                  {(() => {
+                    const Diagram = diagramComponents[`${slug}-after`]
+                    return Diagram ? (
+                      <figure className="my-8">
+                        <Diagram />
+                        <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                          After: QA-gated weekly release workflow
+                        </figcaption>
+                      </figure>
+                    ) : null
+                  })()}
+                </div>
+              </Section>
+            )}
+
+            {/* Zero-Copy Cloning */}
+            {detail.zeroCopyCloning && (
+              <Section title={detail.zeroCopyCloning.title} delay={100}>
+                <div className="space-y-4">
+                  {detail.zeroCopyCloning.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {/* Job Configuration */}
+            {detail.jobConfiguration && (
+              <Section title={detail.jobConfiguration.title} delay={100}>
+                {(() => {
+                  const Diagram = diagramComponents[`${slug}-jobs`]
+                  return Diagram ? (
+                    <figure className="my-8">
+                      <Diagram />
+                      <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                        Production and QA job schedules
+                      </figcaption>
                     </figure>
                   ) : null
                 })()}

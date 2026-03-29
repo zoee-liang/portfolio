@@ -15,12 +15,14 @@ function ArrowRight({ className = '' }) {
 }
 
 function Box({ children, className = '', accent = false, highlight = false }) {
+  const hasCustomBg = className.includes('bg-')
+  const hasCustomBorder = className.includes('border-')
   return (
     <div className={`sketch-border px-3 py-2 text-center text-xs leading-relaxed ${
-      accent ? 'bg-amber-50/60 border-amber-200' :
-      highlight ? 'bg-gray-50' :
-      'bg-white'
-    } ${className}`}>
+      accent && !hasCustomBg ? 'bg-amber-50/60' : ''
+    } ${accent && !hasCustomBorder ? 'border-amber-200' : ''} ${
+      highlight && !hasCustomBg ? 'bg-gray-50' : ''
+    } ${!accent && !highlight && !hasCustomBg ? 'bg-white' : ''} ${className}`}>
       {children}
     </div>
   )
@@ -544,6 +546,225 @@ export function ContextFrameworkDiagram() {
             ]} />
           </tbody>
         </table>
+      </div>
+    </div>
+  )
+}
+
+export function CiCdEnvironmentsDiagram() {
+  return (
+    <div className="py-6 max-w-lg mx-auto">
+      <div className="grid grid-cols-2 gap-3">
+        <Box className="bg-emerald-50/60 border-emerald-200">
+          <div className="font-medium text-gray-700">Production</div>
+          <div className="text-gray-400">Source of truth</div>
+          <div className="text-gray-400">Connected to Looker</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Reflects master branch</div>
+        </Box>
+        <Box className="bg-blue-50/60 border-blue-200">
+          <div className="font-medium text-gray-700">QA</div>
+          <div className="text-gray-400">Zero-copy clone of prod</div>
+          <div className="text-gray-400">Validates before promotion</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Reflects qa branch</div>
+        </Box>
+        <Box className="bg-violet-50/60 border-violet-200">
+          <div className="font-medium text-gray-700">Development</div>
+          <div className="text-gray-400">Individual dev schemas</div>
+          <div className="text-gray-400">Branches based on qa</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Per-developer sandboxes</div>
+        </Box>
+        <Box className="bg-amber-50/60 border-amber-200 border-dashed">
+          <div className="font-medium text-gray-700">UAT</div>
+          <div className="text-gray-400">Upstream change testing</div>
+          <div className="text-gray-400">Source table migrations</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">On-demand</div>
+        </Box>
+      </div>
+      <div className="flex items-center justify-center gap-2 mt-4">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-emerald-50 border border-emerald-200"></div>
+          <span className="text-[10px] text-gray-400">End users</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-blue-50 border border-blue-200"></div>
+          <span className="text-[10px] text-gray-400">QA gate</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-violet-50 border border-violet-200"></div>
+          <span className="text-[10px] text-gray-400">Developer</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-amber-50 border border-amber-200 border-dashed"></div>
+          <span className="text-[10px] text-gray-400">On-demand</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function CiCdBeforeDiagram() {
+  return (
+    <div className="flex flex-col items-center gap-1 py-6 max-w-sm mx-auto">
+      <Box className="bg-violet-50/60 border-violet-200 w-full">
+        <div className="font-medium text-gray-700">Developer Branch</div>
+        <div className="text-gray-400">Based on master</div>
+      </Box>
+
+      <Arrow />
+      <Label>PR targets master</Label>
+      <Arrow />
+
+      <Box className="bg-amber-50/60 border-amber-200 w-full">
+        <div className="font-medium text-gray-700">CI Job</div>
+        <div className="text-gray-400">Runs against production artifacts</div>
+      </Box>
+
+      <Arrow />
+      <Label>merge</Label>
+      <Arrow />
+
+      <Box className="bg-emerald-50/60 border-emerald-200 w-full">
+        <div className="font-medium text-gray-700">Production (master)</div>
+        <div className="text-gray-400">Single database for everything</div>
+      </Box>
+
+      <Arrow />
+
+      <Box className="bg-red-50/60 border-red-200 w-full">
+        <div className="font-medium text-red-700">Daily Job Runs</div>
+        <div className="text-red-400">Conflicts surface here — 1-2 incidents/week</div>
+      </Box>
+    </div>
+  )
+}
+
+export function CiCdAfterDiagram() {
+  return (
+    <div className="flex flex-col items-center gap-1 py-6 max-w-md mx-auto">
+      <Box className="bg-violet-50/60 border-violet-200 w-full">
+        <div className="font-medium text-gray-700">Developer Branch</div>
+        <div className="text-gray-400">Based on qa</div>
+      </Box>
+
+      <Arrow />
+      <Label>PR targets qa</Label>
+      <Arrow />
+
+      <Box className="bg-amber-50/60 border-amber-200 w-full">
+        <div className="font-medium text-gray-700">QA CI Job</div>
+        <div className="text-gray-400">Slim CI with dbt clone + deferral</div>
+      </Box>
+
+      <Arrow />
+      <Label>merge to qa</Label>
+      <Arrow />
+
+      <Box className="bg-blue-50/60 border-blue-200 w-full">
+        <div className="font-medium text-gray-700">QA Environment</div>
+        <div className="text-gray-400">Changes accumulate &middot; compile job regenerates artifacts</div>
+      </Box>
+
+      <Arrow />
+      <Label>Thursday — automated PR from qa → master</Label>
+      <Arrow />
+
+      <Box className="bg-amber-50/60 border-amber-200 w-full">
+        <div className="font-medium text-gray-700">Production CI Job</div>
+        <div className="text-gray-400">Validates combined changes against prod artifacts</div>
+      </Box>
+
+      <Arrow />
+      <Label>team reviews &amp; approves</Label>
+      <Arrow />
+
+      <Box className="bg-emerald-50/60 border-emerald-200 w-full">
+        <div className="font-medium text-gray-700">Production (master)</div>
+        <div className="text-gray-400">Weekly full refresh picks up all changes</div>
+      </Box>
+
+      <Arrow />
+      <Label>Monday — reclone prod → QA (reset cycle)</Label>
+      <Arrow />
+
+      <Box className="bg-blue-50/60 border-blue-200 w-full border-dashed">
+        <div className="font-medium text-gray-700">QA Reset</div>
+        <div className="text-gray-400">Fresh zero-copy clone of production</div>
+      </Box>
+    </div>
+  )
+}
+
+export function CiCdJobsDiagram() {
+  return (
+    <div className="py-6 space-y-6">
+      {/* Production */}
+      <div className="sketch-border p-4 bg-emerald-50/30 border-emerald-200">
+        <div className="font-hand text-sm font-medium text-gray-700 mb-3">Production Environment</div>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">Mon, 5 AM ET</span>
+            <div>
+              <div className="font-medium text-gray-700">Weekly full refresh</div>
+              <div className="text-gray-400">Rebuild all models + reclone prod → QA</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">Tue–Fri, 7 AM ET</span>
+            <div>
+              <div className="font-medium text-gray-700">Daily incremental runs</div>
+              <div className="text-gray-400">Refresh data without rebuilding incrementals</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">On PR to master</span>
+            <div>
+              <div className="font-medium text-gray-700">CI/CD job</div>
+              <div className="text-gray-400">Slim CI with dbt clone + deferral</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">Sun, 4 PM ET</span>
+            <div>
+              <div className="font-medium text-gray-700">PR schema cleanup</div>
+              <div className="text-gray-400">Remove stale PR schemas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* QA */}
+      <div className="sketch-border p-4 bg-blue-50/30 border-blue-200">
+        <div className="font-hand text-sm font-medium text-gray-700 mb-3">QA Environment</div>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">On merge to qa</span>
+            <div>
+              <div className="font-medium text-gray-700">Compiled artifacts</div>
+              <div className="text-gray-400">dbt compile → stable manifest for CI comparison</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">On PR to qa</span>
+            <div>
+              <div className="font-medium text-gray-700">CI/CD job</div>
+              <div className="text-gray-400">Slim CI against QA artifacts</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">On demand</span>
+            <div>
+              <div className="font-medium text-gray-700">QA data refresh</div>
+              <div className="text-gray-400">Full dbt run for complete data testing</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 text-xs">
+            <span className="text-gray-400 shrink-0 w-36">On demand</span>
+            <div>
+              <div className="font-medium text-gray-700">Modified incremental run</div>
+              <div className="text-gray-400">Only modified models, quick validation</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

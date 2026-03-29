@@ -274,6 +274,188 @@ export const projectDetails = {
     },
     stack: ['OpenAI GPT-5 / GPT-5-mini / GPT-4o-mini', 'ChromaDB', 'dbt MCP Server (HTTP/SSE)', 'dbt Cloud Discovery API (GraphQL)', 'Google Cloud Run', 'Google Cloud Build', 'Google Cloud Scheduler', 'Google Cloud Storage', 'GCP Secret Manager', 'GCP Cloud Logging', 'Snowflake', 'Flask', 'Python', 'Docker', 'GitHub Actions'],
   },
+  'cicd-data-pipeline': {
+    date: 'March 2026',
+    overview: [
+      'When I joined the data team, production deployments were essentially yolo merges. Everyone worked off the same branch, pushed to the same database, and hoped nothing broke. Things broke regularly - 1-2 production disruptions a week, usually caused by developers\' changes conflicting with each other in ways that only surfaced after the daily job ran.',
+      'The core problem was structural: without environment separation, there was no safe way to test changes before they hit production. Incremental model updates were the worst offender - updating an upstream incremental model meant its downstream models would have incomplete data until a full refresh ran, but that full refresh happened in production, affecting everyone.',
+      'I designed and implemented a multi-environment staged deployment system using Snowflake\'s zero-copy cloning and dbt Cloud, with automated CI/CD pipelines that took us from ad-hoc merges to structured, validated weekly releases - and from 1-2 production incidents a week to zero.',
+    ],
+    problem: {
+      title: 'The Problem',
+      description: [
+        'The team was working with a single database for everything: production data, PR schemas, and developer sandboxes all lived in the same Snowflake database. This caused a few recurring problems:',
+      ],
+      items: [
+        {
+          title: 'No staging environment',
+          paragraphs: [
+            'Without a QA layer, conflicting changes from multiple developers would collide in production. The team couldn\'t identify issues until everything had been merged and the daily production job ran - by which point the damage was done.',
+          ],
+        },
+        {
+          title: 'PR schema interference',
+          paragraphs: [
+            'Developer PR schemas would unexpectedly interfere with each other during CI job runs, creating false failures and eroding trust in the CI process.',
+          ],
+        },
+        {
+          title: 'Noisy monitoring',
+          paragraphs: [
+            'Monte Carlo alerts would fire for changes in developer schemas, creating alert fatigue and making it harder to spot real production issues.',
+          ],
+        },
+        {
+          title: 'No safe path for upstream testing',
+          paragraphs: [
+            'When data engineering made changes to upstream source tables, there was no dedicated environment to validate how those changes would cascade through the analytics layer before going live.',
+          ],
+        },
+      ],
+    },
+    architecture: {
+      caption: 'Four-environment architecture using Snowflake zero-copy cloning',
+      description: [
+        'The solution was environment separation using Snowflake\'s zero-copy cloning, which gives you a full copy of a database at near-zero storage cost (clones only consume storage for data that diverges from the source).',
+      ],
+      environments: [
+        { name: 'Production', description: 'The source of truth. Connected to Looker, used by end data consumers. Reflects the `master` branch.' },
+        { name: 'QA', description: 'A zero-copy clone of production. All developer work targets this environment first. Changes are tested and validated here before being promoted to production. Reflects the `qa` branch.' },
+        { name: 'Development', description: 'Individual developer schemas for local work. The default branch for development is `qa`, so all new branches and PRs automatically target the right environment.' },
+        { name: 'UAT', description: 'A separate environment for testing major upstream data engineering changes (e.g., source table migrations, ID backfill projects). Used on-demand when upstream systems change significantly.' },
+      ],
+    },
+    deploymentPipeline: {
+      title: 'The Deployment Pipeline',
+      before: {
+        title: 'Before: direct to production',
+        description: [
+          'Previously, each developer worked on a branch based on `master`, opened a PR targeting `master`, and merged directly to production. The CI job ran against production artifacts.',
+          'The problem: developers could work in parallel, but their changes only met each other in production. Conflicts - especially around incremental models - would surface as production failures after the daily job ran, often disrupting downstream reports and dashboards.',
+        ],
+      },
+      after: {
+        title: 'After: QA gate with weekly releases',
+        description: [
+          'The new workflow introduces a QA gate between development and production:',
+        ],
+        steps: [
+          'Developers create branches based on qa and open PRs targeting the qa branch',
+          'A CI/CD job runs against QA artifacts on every PR, using dbt clone and deferral for slim CI',
+          'On merge to qa, a compile job regenerates stable artifacts for future CI comparisons',
+          'Throughout the week, merged changes accumulate in the QA environment where they can be tested together',
+          'Every Thursday, a GitHub Actions workflow automatically opens a PR from qa to master - the team reviews and approves',
+          'A production CI job validates the combined changes against production artifacts',
+          'On merge, the weekly full refresh job picks up all changes - and the production database is recloned into QA to reset the cycle',
+        ],
+        summary: 'This means changes from multiple developers are tested _together_ in QA before any of them touch production. Incremental model updates get a full refresh in QA first, so downstream models have complete data before promotion.',
+      },
+    },
+    zeroCopyCloning: {
+      title: 'Snowflake Zero-Copy Cloning',
+      description: [
+        'The whole system depends on Snowflake\'s zero-copy cloning, which creates an instant, near-zero-cost snapshot of a database. The clone shares the underlying storage with the source - only data that changes after cloning consumes additional storage.',
+        'This is what makes the multi-environment approach practical. Without zero-copy cloning, maintaining a full QA copy of the production database would mean doubling storage costs and managing complex sync processes. With cloning, the production database is recloned into QA weekly as part of the Monday full refresh job, keeping QA fresh with minimal overhead.',
+        'The cloning strategy also handles the reset cycle cleanly: after Thursday\'s production release, Monday\'s full refresh reclones production back into QA, so the QA environment always starts the week as an exact copy of production.',
+      ],
+    },
+    jobConfiguration: {
+      title: 'Job Configuration',
+      production: {
+        title: 'Production environment',
+        jobs: [
+          { name: 'Weekly full refresh', schedule: 'Monday, 5 AM ET', description: 'Rebuilds all models including incrementals for a complete data update. Also reclones the production database into QA to reset the development cycle.' },
+          { name: 'Daily incremental runs', schedule: 'Tue–Fri, 7 AM ET', description: 'Refreshes data without rebuilding incremental models.' },
+          { name: 'CI/CD job', schedule: 'On PR to master', description: 'Uses `dbt clone` and deferral for slim CI, comparing against the most recent successful production job artifacts.' },
+          { name: 'Weekly PR schema cleanup', schedule: 'Sunday, 4 PM ET', description: 'Automatically cleans up stale PR schemas. Scheduled on Sundays because the team only merges to `master` on Thursdays, so there\'s no risk of deleting active PR schemas.' },
+        ],
+      },
+      qa: {
+        title: 'QA environment',
+        jobs: [
+          { name: 'Compiled artifacts', schedule: 'On merge to qa', description: 'Runs `dbt compile` to regenerate a stable manifest for CI comparison. This is the most frequently-run QA job since it fires on every merge throughout the week.' },
+          { name: 'CI/CD job', schedule: 'On PR to qa', description: 'Uses the same slim CI approach but compares against QA artifacts rather than production.' },
+          { name: 'QA data refresh', schedule: 'On demand', description: 'Runs a full `dbt run` against the QA database to test merged changes with complete data.' },
+          { name: 'Modified incremental run', schedule: 'On demand', description: 'Compares QA to production and runs only modified models, without fully refreshing incrementals. Useful for quick validation.' },
+        ],
+      },
+    },
+    decisions: {
+      items: [
+        {
+          title: 'Weekly release cadence over continuous deployment',
+          paragraphs: [
+            'Continuous deployment to production (merge anytime, deploy immediately) is simpler but riskier for a data platform where models are deeply interconnected. A weekly cadence gives the team a full week to accumulate and test changes together in QA, catch conflicts before they reach production, and batch the full refresh so incremental models are properly rebuilt.',
+            'The tradeoff is latency - urgent fixes have to wait for the Thursday release window (or go through an ad-hoc exception process). For our use case, the safety gains far outweighed the speed cost.',
+          ],
+        },
+        {
+          title: 'QA as a clone rather than an independent build',
+          paragraphs: [
+            'QA is a zero-copy clone of production, not an independently-built environment. This means QA always starts from a known-good state (production data), which makes test results trustworthy. The alternative - building QA from scratch with its own job runs - would introduce drift between QA and production, making it harder to know whether a QA success would translate to a production success.',
+          ],
+        },
+        {
+          title: 'Accepting additional workflow steps for safety',
+          paragraphs: [
+            'The new workflow adds steps compared to the old direct-to-production approach - developers target `qa` instead of `master`, changes go through an additional CI check, and there\'s a weekly release ceremony. We acknowledged this tradeoff upfront: more process in exchange for dramatically fewer production incidents. For a team where a single broken incremental model could cascade failures across dozens of downstream reports, the additional steps were worth it.',
+          ],
+        },
+      ],
+    },
+    results: {
+      items: [
+        {
+          title: 'Production stability',
+          paragraphs: [
+            'Went from 1-2 production disruptions per week to effectively zero. The QA gate catches conflicts between developer changes before they reach production.',
+          ],
+        },
+        {
+          title: 'Developer confidence',
+          paragraphs: [
+            'The team no longer fears stepping on each other\'s work. With environment separation, developers can work on interconnected models in parallel without worrying about cascading failures.',
+          ],
+        },
+        {
+          title: 'Fully automated pipeline',
+          paragraphs: [
+            'The entire workflow - from CI on PR, to QA validation, to production release, to QA reset - runs without manual intervention. No deploy scripts to remember, no manual cloning steps, no "did you remember to refresh the QA database" checklist items.',
+          ],
+        },
+        {
+          title: 'Clean monitoring',
+          paragraphs: [
+            'Monte Carlo alerts now only fire for actual production issues, not developer schema changes. This eliminated alert fatigue and restored trust in the monitoring system.',
+          ],
+        },
+        {
+          title: 'Structured release process',
+          paragraphs: [
+            'Weekly Thursday releases replaced ad-hoc merges, giving the team a predictable rhythm and a clear point to validate combined changes before they go live.',
+          ],
+        },
+      ],
+    },
+    whatsNext: {
+      intro: 'The current system has been running reliably for over two years, but the team has grown significantly since it was first built. That growth is opening the door to evolving the deployment strategy further.',
+      items: [
+        {
+          title: 'True blue/green deployment',
+          paragraphs: [
+            'The current pattern clones production into QA as a starting point for development. The next evolution flips this: QA becomes the "active build" environment where all changes are applied and validated with full data refreshes, and production receives a validated clone of QA. This means production only ever gets a known-good snapshot - never an in-progress state. It\'s a shift from "test in QA, then replay in production" to "build in QA, then promote the result."',
+          ],
+        },
+        {
+          title: 'Daily releases',
+          paragraphs: [
+            'With a bigger team producing more changes and a more robust QA environment, the weekly Thursday release cadence is becoming a bottleneck. Moving to daily releases - automated PR from `qa` to `master` every morning, with the team reviewing and approving - would reduce the latency between a change being ready and that change reaching production, while still maintaining the QA gate that keeps production stable.',
+          ],
+        },
+      ],
+    },
+    stack: ['dbt Cloud', 'GitHub Actions', 'Snowflake', 'Monte Carlo', 'Looker', 'dbt Clone', 'Docker'],
+  },
   'context-engineering': {
     date: 'March 2026',
     overviewDiagramAfter: 1,
