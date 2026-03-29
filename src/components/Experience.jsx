@@ -25,7 +25,7 @@ function ExperienceCard({ job, index, isLast }) {
     >
       {/* Year label */}
       <div className="absolute left-0 top-6 hidden md:flex w-14 justify-end">
-        <span className="text-xs font-bold text-gray-400">{job.year}</span>
+        <span className="text-xs font-bold text-gray-500">{job.year}</span>
       </div>
 
       {/* Timeline dot — hand-drawn circle */}
@@ -45,6 +45,8 @@ function ExperienceCard({ job, index, isLast }) {
 
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-label={`${open ? 'Collapse' : 'Expand'} ${job.company} experience details`}
         className="w-full text-left sketch-border p-5 transition-all duration-200 cursor-pencil"
       >
         <div className="flex items-start justify-between gap-3">
@@ -72,7 +74,7 @@ function ExperienceCard({ job, index, isLast }) {
               )}
             </div>
           </div>
-          <div className="text-right text-sm text-gray-400 shrink-0">
+          <div className="text-right text-sm text-gray-500 shrink-0">
             <div>{job.period}</div>
             <div>{job.location}</div>
           </div>
@@ -117,6 +119,7 @@ export default function Experience() {
           <a
             href="/zoe-liang-resume.pdf"
             download
+            aria-label="Download resume as PDF"
             className="hover-squiggly text-sm font-medium text-gray-900 py-1"
           >
             Download Resume ↓

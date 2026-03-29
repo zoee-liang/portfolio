@@ -90,7 +90,7 @@ export default function Projects() {
         <h2 className="font-hand text-3xl font-medium text-gray-900 mb-4">
           <span className="squiggly-underline">Featured Work</span>
         </h2>
-        <p className="text-gray-400 text-sm mb-12">Hover over a card to peek at the doodle, or click "Read more" for an in-depth look.</p>
+        <p className="text-gray-500 text-sm mb-12">Hover over a card to peek at the doodle, or click "Read more" for an in-depth look.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {projects.map((project, i) => (

@@ -261,3 +261,24 @@ html {
 .falling-leaf svg {
   animation: leafSway 3.5s ease-in-out infinite;
 }
+
+/* Accessibility — respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  /* Disable looping/decorative animations */
+  .animate-doodle-1,
+  .animate-doodle-2,
+  .animate-doodle-3,
+  .animate-float,
+  .falling-leaf,
+  .falling-leaf svg { animation: none; }
+
+  /* Make entrance animations instant */
+  .animate-fade-in-up,
+  .tag-stagger { animation-duration: 0.01s; }
+
+  /* Disable draw-path animation */
+  .draw-path.visible { animation-duration: 0.01s; }
+  .draw-arrow.visible { animation-duration: 0.01s; animation-delay: 0s; }
+}

@@ -12,13 +12,13 @@ export default function Hero() {
       </div>
 
       <div className="relative max-w-3xl mx-auto px-6 py-24">
-        <p className="text-gray-400 text-sm tracking-widest mb-6 animate-fade-in-up">
+        <p className="text-gray-500 text-sm tracking-widest mb-6 animate-fade-in-up">
           Hi there! 👋 I'm
         </p>
         <h1 className="font-hand text-5xl md:text-7xl font-medium text-gray-900 leading-tight mb-6 animate-fade-in-up animation-delay-100">
           <span className="squiggly-underline">Zoe Liang</span>
         </h1>
-        <h2 className="font-hand text-xl md:text-2xl text-gray-400 font-normal mb-10 animate-fade-in-up animation-delay-200">
+        <h2 className="font-hand text-xl md:text-2xl text-gray-500 font-normal mb-10 animate-fade-in-up animation-delay-200">
           Senior Data Platform Engineer
         </h2>
         <p className="text-gray-500 text-lg leading-relaxed max-w-2xl mb-12 animate-fade-in-up animation-delay-300">
@@ -39,12 +39,14 @@ export default function Hero() {
             href="https://www.linkedin.com/in/zoee-liang/"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Visit LinkedIn profile"
             className="hover-squiggly text-gray-900 font-medium py-3"
           >
             LinkedIn
           </a>
           <a
             href="mailto:yiliang0619@gmail.com"
+            aria-label="Send email"
             className="hover-squiggly text-gray-900 font-medium py-3"
           >
             Email
