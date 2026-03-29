@@ -770,6 +770,54 @@ export function CiCdJobsDiagram() {
   )
 }
 
+export function SnowflakeApproachDiagram() {
+  return (
+    <div className="py-6 max-w-lg mx-auto">
+      <div className="flex flex-col items-center gap-1">
+        {/* Phase 1 */}
+        <Box className="bg-amber-50/60 border-amber-200 w-full">
+          <div className="font-medium text-gray-700">Phase 1: Configuration & Cleanup</div>
+          <div className="text-gray-400">Dynamic warehouse sizing &middot; delete unused models &middot; tune dbt config</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Quick wins — immediate impact, low risk</div>
+        </Box>
+
+        <Arrow />
+
+        {/* Phase 2 */}
+        <Box className="bg-blue-50/60 border-blue-200 w-full">
+          <div className="font-medium text-gray-700">Phase 2: Model-Level Optimization</div>
+          <div className="text-gray-400">Simplify complex models &middot; convert to incremental &middot; clustering keys &middot; query pruning</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Targeted work — biggest runtime gains</div>
+        </Box>
+
+        <Arrow />
+
+        {/* Phase 3 */}
+        <Box className="bg-emerald-50/60 border-emerald-200 w-full">
+          <div className="font-medium text-gray-700">Phase 3: Monitoring & Observability</div>
+          <div className="text-gray-400">Runtime tracking models &middot; Looker dashboard &middot; weekly Slack alerts</div>
+          <div className="text-[10px] text-gray-400 mt-1 italic">Sustained gains — catch regressions early</div>
+        </Box>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-amber-50 border border-amber-200"></div>
+          <span className="text-[10px] text-gray-400">Config</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-blue-50 border border-blue-200"></div>
+          <span className="text-[10px] text-gray-400">Optimization</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-emerald-50 border border-emerald-200"></div>
+          <span className="text-[10px] text-gray-400">Observability</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ContextLayersDiagram() {
   return (
     <div className="flex flex-col items-center gap-1 py-6 max-w-md mx-auto">

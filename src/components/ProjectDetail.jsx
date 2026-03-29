@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useInView } from '../hooks/useInView'
 import { projects, projectDetails } from '../data/content'
 import { SquigglyDivider } from './Doodles'
-import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram, ContextLayersDiagram, MetadataFieldsTable, MetadataReasoningDiagram, EmbeddingExampleDiagram, ContextLifecycleDiagram, ContextFrameworkDiagram, CiCdEnvironmentsDiagram, CiCdBeforeDiagram, CiCdAfterDiagram, CiCdJobsDiagram } from './ProjectDiagrams'
+import { ArchitectureDiagram, CiCdDiagram, DbtPipelineDiagram, ToolingDiagram, ContextLayersDiagram, MetadataFieldsTable, MetadataReasoningDiagram, EmbeddingExampleDiagram, ContextLifecycleDiagram, ContextFrameworkDiagram, CiCdEnvironmentsDiagram, CiCdBeforeDiagram, CiCdAfterDiagram, CiCdJobsDiagram, SnowflakeApproachDiagram } from './ProjectDiagrams'
 
 // Parses [[url|text]] into Links and `code` into inline code elements
 function RichText({ text }) {
@@ -63,6 +63,7 @@ const diagramComponents = {
   'cicd-data-pipeline-before': CiCdBeforeDiagram,
   'cicd-data-pipeline-after': CiCdAfterDiagram,
   'cicd-data-pipeline-jobs': CiCdJobsDiagram,
+  'snowflake-optimization-approach': SnowflakeApproachDiagram,
 }
 
 function Section({ title, children, delay = 0 }) {
@@ -269,7 +270,7 @@ export default function ProjectDetail() {
                       {detail.deploymentPipeline.after.steps.map((step, i) => (
                         <li key={i} className="flex gap-3 text-sm text-gray-500 leading-relaxed">
                           <span className="text-gray-300 font-mono text-xs mt-0.5 shrink-0">{i + 1}.</span>
-                          <RichText text={step} />
+                          <span><RichText text={step} /></span>
                         </li>
                       ))}
                     </ol>
@@ -317,6 +318,45 @@ export default function ProjectDetail() {
                     </figure>
                   ) : null
                 })()}
+              </Section>
+            )}
+
+            {/* Optimization Approach (phased) */}
+            {detail.optimizationApproach && (
+              <Section title={detail.optimizationApproach.title} delay={100}>
+                <div className="space-y-4 mb-6">
+                  {detail.optimizationApproach.description.map((p, i) => (
+                    <p key={i} className="text-gray-500 text-base leading-relaxed"><RichText text={p} /></p>
+                  ))}
+                </div>
+                {(() => {
+                  const Diagram = diagramComponents[`${slug}-approach`]
+                  return Diagram ? (
+                    <figure className="my-8">
+                      <Diagram />
+                      <figcaption className="text-center text-xs text-gray-400 mt-3 italic">
+                        Three-phase optimization approach
+                      </figcaption>
+                    </figure>
+                  ) : null
+                })()}
+                {detail.optimizationApproach.phases && (
+                  <div className="space-y-10 mt-8">
+                    {detail.optimizationApproach.phases.map((phase, i) => (
+                      <div key={i}>
+                        <h4 className="font-hand text-lg font-medium text-gray-800 mb-4">{phase.title}</h4>
+                        <ul className="space-y-3">
+                          {phase.items.map((item, j) => (
+                            <li key={j} className="flex gap-2.5 text-sm text-gray-500 leading-relaxed">
+                              <span className="text-gray-300 mt-0.5 shrink-0">-</span>
+                              <span><RichText text={item} /></span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Section>
             )}
 

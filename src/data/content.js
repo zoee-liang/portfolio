@@ -115,21 +115,21 @@ export const projects = [
     link: '',
   },
   {
-    title: 'CI/CD Data Pipeline',
-    slug: 'cicd-data-pipeline',
-    description:
-      'Designed and implemented a blue/green deployment strategy and full CI/CD pipeline for data releases using GitHub Actions and dbt Cloud, replacing ad-hoc changes with structured, validated production deployments.',
-    tags: ['GitHub Actions', 'dbt Cloud', 'Snowflake'],
-    outcome: 'Structured weekly deployments with full testing & validation',
-    link: '',
-  },
-  {
     title: 'Snowflake Optimization',
     slug: 'snowflake-optimization',
     description:
       'Audited Snowflake warehouse configurations and dbt model materializations to identify inefficiencies. Refactored query patterns and warehouse sizing to dramatically improve pipeline performance.',
     tags: ['Snowflake', 'dbt', 'SQL'],
     outcome: '~60% reduction in dbt job runtime',
+    link: '',
+  },
+  {
+    title: 'CI/CD Data Pipeline',
+    slug: 'cicd-data-pipeline',
+    description:
+      'Designed and implemented a blue/green deployment strategy and full CI/CD pipeline for data releases using GitHub Actions and dbt Cloud, replacing ad-hoc changes with structured, validated production deployments.',
+    tags: ['GitHub Actions', 'dbt Cloud', 'Snowflake'],
+    outcome: 'Structured weekly deployments with full testing & validation',
     link: '',
   },
 ]
@@ -275,7 +275,7 @@ export const projectDetails = {
     stack: ['OpenAI GPT-5 / GPT-5-mini / GPT-4o-mini', 'ChromaDB', 'dbt MCP Server (HTTP/SSE)', 'dbt Cloud Discovery API (GraphQL)', 'Google Cloud Run', 'Google Cloud Build', 'Google Cloud Scheduler', 'Google Cloud Storage', 'GCP Secret Manager', 'GCP Cloud Logging', 'Snowflake', 'Flask', 'Python', 'Docker', 'GitHub Actions'],
   },
   'cicd-data-pipeline': {
-    date: 'March 2026',
+    date: 'September 2023',
     overview: [
       'When I joined the data team, production deployments were essentially yolo merges. Everyone worked off the same branch, pushed to the same database, and hoped nothing broke. Things broke regularly - 1-2 production disruptions a week, usually caused by developers\' changes conflicting with each other in ways that only surfaced after the daily job ran.',
       'The core problem was structural: without environment separation, there was no safe way to test changes before they hit production. Incremental model updates were the worst offender - updating an upstream incremental model meant its downstream models would have incomplete data until a full refresh ran, but that full refresh happened in production, affecting everyone.',
@@ -340,11 +340,11 @@ export const projectDetails = {
           'The new workflow introduces a QA gate between development and production:',
         ],
         steps: [
-          'Developers create branches based on qa and open PRs targeting the qa branch',
-          'A CI/CD job runs against QA artifacts on every PR, using dbt clone and deferral for slim CI',
-          'On merge to qa, a compile job regenerates stable artifacts for future CI comparisons',
+          'Developers create branches based on `qa` and open PRs targeting the `qa` branch',
+          'A CI/CD job runs against QA artifacts on every PR, using `dbt clone` and deferral for slim CI',
+          'On merge to `qa`, a compile job regenerates stable artifacts for future CI comparisons',
           'Throughout the week, merged changes accumulate in the QA environment where they can be tested together',
-          'Every Thursday, a GitHub Actions workflow automatically opens a PR from qa to master - the team reviews and approves',
+          'Every Thursday, a GitHub Actions workflow automatically opens a PR from `qa` to `master` - the team reviews and approves',
           'A production CI job validates the combined changes against production artifacts',
           'On merge, the weekly full refresh job picks up all changes - and the production database is recloned into QA to reset the cycle',
         ],
@@ -619,5 +619,173 @@ export const projectDetails = {
       ],
     },
     stack: ['dbt Semantic Layer', 'Python', 'ChromaDB', 'OpenAI text-embedding-3-small', 'GitHub Actions', 'Google Cloud Storage', 'YAML', 'dbt Cloud Discovery API'],
+  },
+  'snowflake-optimization': {
+    date: 'January 2024',
+    overview: [
+      'Our dbt project had grown to around 500 models, and performance had quietly become a serious problem. Daily incremental jobs were taking 1-2 hours to complete, which meant the team was waiting until mid-morning for fresh data. Worse, CI jobs inherited the same sluggishness - every PR took painfully long to validate, slowing down development across the board.',
+      'Snowflake costs were climbing in step with the runtime. The warehouse was running longer, queries were scanning more data than necessary, and unused models were still being built on every run.',
+      'I ran a systematic audit of warehouse configurations, model materializations, query patterns, and individual model runtimes - then worked through a series of optimizations that brought the daily job from 1-2 hours down to around 30 minutes, a ~60% reduction. I also built a data quality monitoring system to make sure performance stayed healthy over time.',
+    ],
+    problem: {
+      title: 'The Problem',
+      description: [
+        'The symptoms were straightforward, but the causes were spread across the entire dbt project:',
+      ],
+      items: [
+        {
+          title: 'Slow incremental jobs',
+          paragraphs: [
+            'Daily incremental runs were taking 1-2 hours to complete across ~500 models. Fresh data wasn\'t available to stakeholders until mid-morning, and the team had no visibility into which models were the bottlenecks.',
+          ],
+        },
+        {
+          title: 'Painful CI',
+          paragraphs: [
+            'CI jobs ran against the same warehouse configuration as production, meaning every PR validation inherited the same slowness. Developers were waiting 30+ minutes for CI to pass on routine changes, which discouraged small, frequent PRs and slowed the team\'s iteration speed.',
+          ],
+        },
+        {
+          title: 'Rising costs',
+          paragraphs: [
+            'Longer runtimes meant more Snowflake compute time. The warehouse was sized uniformly - every model, whether it processed 100 rows or 100 million, ran on the same small warehouse. There was no cost optimization strategy beyond "run everything and hope it finishes."',
+          ],
+        },
+        {
+          title: 'No observability',
+          paragraphs: [
+            'The team had no systematic way to track model runtimes, identify regressions, or understand where compute was being spent. Performance issues only surfaced when someone noticed the daily job was taking unusually long.',
+          ],
+        },
+      ],
+    },
+    optimizationApproach: {
+      title: 'The Approach',
+      description: [
+        'Rather than guessing at fixes, I started with a full audit to understand where time and compute were actually being spent. The optimization work fell into three phases: quick wins with configuration changes, deeper model-level optimizations, and building ongoing observability to prevent regressions.',
+      ],
+      phases: [
+        {
+          title: 'Phase 1: Configuration & cleanup',
+          items: [
+            'Implemented dynamic warehouse sizing using `on-run-start` and `on-run-end` hooks - the project defaults to a small warehouse, but automatically scales up to a larger warehouse for heavy models like events tables. This meant the right compute was allocated to the right workload without manual intervention.',
+            'Audited and deleted unused models that were still being built on every run. In a 500-model project, model sprawl is inevitable - removing dead weight was an easy win.',
+            'Tuned dbt project configurations: thread counts, model-level warehouse overrides, and run order optimizations to reduce idle time between dependent models.',
+          ],
+        },
+        {
+          title: 'Phase 2: Model-level optimization',
+          items: [
+            'Identified the slowest-running models by analyzing Snowflake query history and dbt run results. A handful of models accounted for a disproportionate share of total runtime.',
+            'Simplified complex dbt models - broke apart multi-CTE monsters into staged intermediate models, replaced expensive joins with more efficient patterns, and eliminated redundant transformations.',
+            'Converted appropriate table materializations to incremental models, so subsequent runs only process new or changed data instead of rebuilding from scratch.',
+            'Applied Snowflake clustering keys on high-volume incremental tables to improve partition pruning. This dramatically reduced the amount of data scanned on each incremental run - Snowflake could skip irrelevant micro-partitions entirely rather than scanning the full table.',
+            'Optimized incremental model strategies: tightened lookback windows, added proper query pruning predicates, and ensured incremental logic was actually leveraging Snowflake\'s partition elimination.',
+          ],
+        },
+        {
+          title: 'Phase 3: Monitoring & observability',
+          items: [
+            'Built dbt models on top of Snowflake\'s system views (`query_history` and `warehouse_metering_history`) to track model-level runtimes, warehouse utilization, and cost attribution over time.',
+            'Created a Looker dashboard that surfaces runtime trends, cost breakdowns, and a composite data quality score. The team can see at a glance whether any model has regressed or if warehouse spend is trending in the wrong direction.',
+            'Configured weekly automated alerts to a data quality monitoring Slack channel with the current quality score - so the team catches regressions immediately rather than discovering them after stakeholders complain about stale data.',
+          ],
+        },
+      ],
+    },
+    decisions: {
+      items: [
+        {
+          title: 'Dynamic warehouse sizing over dedicated warehouses',
+          paragraphs: [
+            'The alternative to `on-run-start`/`on-run-end` hooks was to create separate Snowflake warehouses for different model tiers (e.g., a large warehouse for events, a medium for marts, a small for staging). Dedicated warehouses give more granular control but add operational complexity - more warehouses to monitor, more configuration to maintain, and more potential for misconfiguration.',
+            'Dynamic sizing with hooks keeps the project simple: one warehouse that scales up for heavy work and scales back down automatically. For a team of our size, the operational simplicity outweighed the marginal efficiency gains of dedicated warehouses.',
+          ],
+        },
+        {
+          title: 'Incremental conversion where it matters, not everywhere',
+          paragraphs: [
+            'Not every table model should be incremental. Incremental models add complexity - they require careful logic for late-arriving data, lookback windows, and deduplication. For small-to-medium tables that rebuild in seconds, the added complexity isn\'t worth the marginal time savings.',
+            'I focused incremental conversions on the models that actually moved the needle: high-volume event tables and fact tables where full rebuilds were scanning billions of rows. This kept the project maintainable while capturing most of the performance gains.',
+          ],
+        },
+        {
+          title: 'Automated monitoring over manual spot-checks',
+          paragraphs: [
+            'Before this project, performance monitoring was reactive - someone would notice a slow job and investigate. The weekly Slack alerts with a data quality score flipped this to proactive. The team sees regressions the week they happen, not months later when cumulative slowdowns become unbearable.',
+            'The tradeoff is maintenance: the monitoring models and dashboard need to be kept up to date as the project evolves. But the cost of maintaining a few monitoring models is far lower than the cost of letting performance silently degrade.',
+          ],
+        },
+      ],
+    },
+    results: {
+      items: [
+        {
+          title: 'Runtime reduction',
+          paragraphs: [
+            'Daily incremental jobs dropped from 1-2 hours to approximately 30 minutes - a ~60% reduction. Fresh data is now available to stakeholders by early morning, and the team no longer plans their day around waiting for the daily job to finish.',
+          ],
+        },
+        {
+          title: 'Faster development cycle',
+          paragraphs: [
+            'CI job times improved proportionally. Developers went from waiting 30+ minutes for PR validation to getting results much faster, which encouraged smaller, more frequent PRs and unblocked the team\'s development velocity.',
+          ],
+        },
+        {
+          title: 'Cost efficiency',
+          paragraphs: [
+            'Less runtime means less Snowflake compute. Dynamic warehouse sizing ensured the team wasn\'t paying for large compute on lightweight models, and clustering reduced the amount of data scanned per query. The combined effect was a meaningful reduction in monthly Snowflake spend.',
+          ],
+        },
+        {
+          title: 'Sustained performance',
+          paragraphs: [
+            'The weekly monitoring alerts and Looker dashboard gave the team visibility into performance trends for the first time. Regressions are now caught within a week of introduction rather than accumulating silently over months.',
+          ],
+        },
+      ],
+    },
+    lessons: {
+      title: 'What We Learned',
+      items: [
+        {
+          title: 'Measure before you optimize',
+          paragraphs: [
+            'The audit revealed that a small number of models accounted for the majority of runtime. Without measuring first, it would have been easy to spend time optimizing models that didn\'t matter. The Snowflake query history was the single most useful input to the entire project.',
+          ],
+        },
+        {
+          title: 'Configuration changes compound',
+          paragraphs: [
+            'No single change was a silver bullet. Dynamic warehouse sizing, removing unused models, converting to incrementals, adding clustering keys - each shaved off time individually, but together they compounded into a dramatic improvement. The lesson is to not underestimate the cumulative impact of many small, well-targeted changes.',
+          ],
+        },
+        {
+          title: 'Observability is the real deliverable',
+          paragraphs: [
+            'The optimizations brought immediate gains, but the monitoring system is what keeps those gains durable. Without it, the project would slowly regress as new models are added and existing ones grow. The monitoring dashboard and weekly alerts turned a one-time optimization into an ongoing capability.',
+          ],
+        },
+      ],
+    },
+    whatsNext: {
+      intro: 'The optimization work created a strong baseline, but there are opportunities to push further:',
+      items: [
+        {
+          title: 'Cost attribution by team',
+          paragraphs: [
+            'The current monitoring tracks cost at the model level, but doesn\'t attribute it to specific teams or business units. Adding team-level cost attribution would help the organization make more informed decisions about where to invest in further optimization - and create accountability for compute-heavy workloads.',
+          ],
+        },
+        {
+          title: 'Automated regression gates',
+          paragraphs: [
+            'The weekly alerts catch regressions after they\'re merged, but the next step is catching them before they reach production. Adding runtime regression checks to the CI pipeline - flagging PRs that significantly increase model runtime - would shift performance monitoring left, from detection to prevention.',
+          ],
+        },
+      ],
+    },
+    stack: ['Snowflake', 'dbt Cloud', 'dbt Core', 'SQL', 'Looker', 'Monte Carlo'],
   },
 }
